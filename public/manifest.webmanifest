@@ -1,0 +1,29 @@
+{
+  "name": "Plata — finanzas en segundos",
+  "short_name": "Plata",
+  "description": "Captura tus finanzas en segundos y obtén claridad total de tu dinero.",
+  "lang": "es-PE",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f7f9",
+  "theme_color": "#16a34a",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/icons/192", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/512", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/512m", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Nuevo gasto", "short_name": "Gasto", "url": "/?add=expense", "icons": [{ "src": "/icons/192", "sizes": "192x192" }] },
+    { "name": "Dictar gasto", "short_name": "Voz", "url": "/?voice=1", "icons": [{ "src": "/icons/192", "sizes": "192x192" }] },
+    { "name": "Nuevo ingreso", "short_name": "Ingreso", "url": "/?add=income", "icons": [{ "src": "/icons/192", "sizes": "192x192" }] }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": { "text": "text", "title": "title" }
+  }
+}

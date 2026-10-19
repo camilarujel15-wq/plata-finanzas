@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bg: 246 247 249;
+  --surface: 255 255 255;
+  --surface-2: 240 242 245;
+  --line: 226 230 235;
+  --ink: 15 23 42;
+  --muted: 100 116 139;
+  --brand: 22 163 74;
+  --brand-ink: 255 255 255;
+  --pos: 22 163 74;
+  --neg: 220 38 38;
+  --warn: 217 119 6;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: 9 11 15;
+    --surface: 20 23 30;
+    --surface-2: 30 34 43;
+    --line: 42 47 58;
+    --ink: 236 239 244;
+    --muted: 148 158 175;
+    --brand: 34 197 94;
+    --brand-ink: 4 20 10;
+    --pos: 74 222 128;
+    --neg: 248 113 113;
+    --warn: 251 191 36;
+    color-scheme: dark;
+  }
+}
+
+html,
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--ink));
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+body {
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line/70 bg-surface;
+  }
+  .tap {
+    @apply transition active:scale-[.97] active:opacity-80;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-surface px-3 py-3 text-base outline-none placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/20;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted;
+  }
+  .btn {
+    @apply tap inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-brand-ink;
+  }
+  .btn-ghost {
+    @apply btn bg-surface-2 text-ink;
+  }
+  .btn-danger {
+    @apply btn bg-neg/10 text-neg;
+  }
+  .chip {
+    @apply tap inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-sm;
+  }
+  .chip-on {
+    @apply border-brand bg-brand/10 font-medium text-ink;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
