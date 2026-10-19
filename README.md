@@ -15,7 +15,8 @@ PWA mobile-first (Next.js + TypeScript + Tailwind + Zustand + Recharts + Supabas
 ## Empezar
 
 ```bash
-cd finanzas
+git clone https://github.com/camilarujel15-wq/plata-finanzas.git
+cd plata-finanzas
 npm install
 npm run dev          # http://localhost:3000
 npm test             # tests de dominio (parser, saldos, presupuestos, importación)
@@ -27,7 +28,7 @@ Sin variables de entorno la app funciona en **modo local** (IndexedDB). Para sin
 1. Crea un proyecto en [Supabase](https://supabase.com) y ejecuta `supabase/migrations/0001_init.sql` y `0002_rls.sql` (SQL editor o `supabase db push`).
 2. En *Authentication → URL configuration* añade tu dominio a las URLs de redirección.
 3. Copia `.env.example` a `.env.local` y completa `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-4. Despliega en Vercel con *Root Directory* = `finanzas`.
+4. Despliega en Vercel: *Add New → Project* → importa `plata-finanzas` → *Deploy* (detecta Next.js solo).
 
 En el celular: abre la URL → menú del navegador → **Agregar a pantalla de inicio**. Mantén presionado el ícono para los atajos *Nuevo gasto / Dictar / Ingreso*.
 

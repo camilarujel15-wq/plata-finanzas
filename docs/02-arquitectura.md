@@ -63,7 +63,7 @@ flowchart LR
 ## 2.3 Estructura de carpetas
 
 ```
-finanzas/
+plata-finanzas/
 ├── docs/                         # Esta documentación
 ├── public/
 │   ├── manifest.webmanifest      # PWA: íconos, atajos, share_target
