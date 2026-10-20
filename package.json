@@ -22,7 +22,7 @@
     "@capacitor/splash-screen": "6.0.3",
     "@capacitor/status-bar": "6.0.2",
     "@fontsource-variable/plus-jakarta-sans": "5.1.1",
-    "@supabase/supabase-js": "2.45.4",
+    "@supabase/supabase-js": "2.117.2",
     "lucide-react": "0.451.0",
     "next": "14.2.35",
     "papaparse": "5.4.1",

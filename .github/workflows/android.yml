@@ -31,6 +31,9 @@ jobs:
       - name: Tests
         run: npm test
 
+      - name: Comprobar conexión con la nube (Supabase)
+        run: node scripts/check-cloud.mjs
+
       - name: Build web (exportación estática)
         run: npm run build
 
