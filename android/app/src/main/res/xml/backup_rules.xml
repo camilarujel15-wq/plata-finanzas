@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copia de seguridad automática de Android (Google Drive): incluye los datos locales de la app
+     como red de seguridad adicional al respaldo en la nube de Plata. -->
+<full-backup-content>
+    <include domain="root" path="app_webview/" />
+    <include domain="sharedpref" path="." />
+    <include domain="database" path="." />
+</full-backup-content>

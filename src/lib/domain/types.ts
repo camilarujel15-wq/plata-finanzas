@@ -13,7 +13,7 @@ export type AccountType = "checking" | "savings" | "credit_card" | "wallet" | "c
 export type TxType = "expense" | "income" | "transfer";
 export type TransferKind = "internal" | "card_payment" | "savings";
 export type CategoryKind = "expense" | "income";
-export type TxSource = "manual" | "text" | "voice" | "import" | "ocr";
+export type TxSource = "manual" | "text" | "voice" | "import" | "ocr" | "widget";
 
 /** Campos comunes para sincronización offline-first (last-write-wins). */
 export interface Syncable {
@@ -117,6 +117,8 @@ export interface Settings {
   onboarded: boolean;
   /** Oculta montos en pantalla (modo privacidad en lugares públicos). */
   hideAmounts?: boolean;
+  /** Categorías fijadas en el widget (si no, las 4 más usadas). */
+  widgetFavorites?: string[];
 }
 
 export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {

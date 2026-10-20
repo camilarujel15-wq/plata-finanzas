@@ -9,21 +9,40 @@ import { useStore } from "@/lib/store/store";
 import { useUI } from "@/lib/store/ui";
 import { syncNow } from "@/lib/sync/engine";
 import { getSupabase } from "@/lib/sync/supabase";
+import { isNative, syncStatusBar } from "@/lib/native/platform";
+import { startWidgetBridge } from "@/lib/native/widget";
+import { listenDeepLinks } from "@/lib/native/deeplinks";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const hydrated = useStore((s) => s.hydrated);
   const outbox = useStore((s) => s.outbox.length);
+  const hasAccounts = useStore((s) => s.accounts.some((a) => !a.deletedAt));
   const params = useSearchParams();
   const openQuickAdd = useUI((s) => s.openQuickAdd);
+  const toast = useUI((s) => s.toast);
 
-  // Service worker (PWA instalable + offline).
+  // Web: service worker (PWA). En la app nativa los archivos ya vienen empaquetados.
   useEffect(() => {
-    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+    if (!isNative() && "serviceWorker" in navigator && process.env.NODE_ENV === "production") {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
+    syncStatusBar();
   }, []);
 
-  // Atajos del ícono de la app (manifest shortcuts) y Web Share Target: /?add=expense, /?voice=1, /?text=...
+  // App nativa: widget (snapshot + cola de movimientos) y enlaces plata://
+  useEffect(() => {
+    if (!hydrated) return;
+    const stopWidget = startWidgetBridge((n) =>
+      toast({ title: `${n} ${n === 1 ? "movimiento" : "movimientos"} desde el widget`, body: "Ya están en tu historial.", tone: "success" }),
+    );
+    const stopLinks = listenDeepLinks((a) => openQuickAdd({ autoVoice: a === "voice" }));
+    return () => {
+      stopWidget();
+      stopLinks();
+    };
+  }, [hydrated, toast, openQuickAdd]);
+
+  // Atajos web (manifest) y Web Share Target: /?add=expense, /?voice=1, /?text=...
   useEffect(() => {
     if (!hydrated) return;
     const add = params.get("add");
@@ -35,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }, [hydrated, params, openQuickAdd]);
 
-  // Sincronización: al abrir, al volver a la app y al recuperar conexión.
+  // Respaldo en la nube: al abrir, al volver a la app y al recuperar conexión.
   useEffect(() => {
     if (!hydrated || !getSupabase()) return;
     const run = () => navigator.onLine && syncNow().catch((e) => console.warn("sync", e));
@@ -49,7 +68,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
   }, [hydrated]);
 
-  // Sube cambios poco después de cada registro.
   useEffect(() => {
     if (!hydrated || !outbox || !getSupabase()) return;
     const t = setTimeout(() => navigator.onLine && syncNow().catch(() => {}), 1500);
@@ -58,16 +76,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-pulse rounded-2xl bg-brand/30" />
+      <div className="flex min-h-dvh items-center justify-center bg-[#0b1220]">
+        <div className="h-12 w-12 animate-pulse rounded-[18px] bg-gradient-to-br from-emerald-300 to-emerald-600" />
       </div>
     );
   }
 
   return (
     <>
-      <main className="mx-auto min-h-dvh max-w-lg px-4 pb-32">{children}</main>
-      <BottomNav />
+      <main className="mx-auto min-h-dvh max-w-lg px-5 pb-40">{children}</main>
+      {hasAccounts && <BottomNav />}
       <QuickAdd />
       <Toaster />
     </>

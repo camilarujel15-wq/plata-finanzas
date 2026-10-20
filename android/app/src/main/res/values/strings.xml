@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Plata</string>
+    <string name="title_activity_main">Plata</string>
+    <string name="package_name">pe.plata.finanzas</string>
+    <string name="custom_url_scheme">plata</string>
+    <string name="widget_description">Tu disponible real y registro de gastos en un toque</string>
+</resources>

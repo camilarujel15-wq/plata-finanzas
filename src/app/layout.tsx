@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
+import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   applicationName: "Plata",
   appleWebApp: { capable: true, title: "Plata", statusBarStyle: "default" },
-  icons: { icon: "/icon.svg", apple: "/icons/192" },
+  icons: { icon: "/icon.svg", apple: "/icons/icon-192.png" },
   formatDetection: { telephone: false },
 };
 
@@ -18,15 +19,15 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
-    { media: "(prefers-color-scheme: dark)", color: "#090b0f" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f6f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#070b14" },
   ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className="font-sans antialiased">
+      <body className="font-sans">
         <Suspense>
           <AppShell>{children}</AppShell>
         </Suspense>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { SpeechRecognition as NativeSpeech } from "@capacitor-community/speech-recognition";
+import { isNative } from "@/lib/native/platform";
 
 /* Tipos mínimos de la Web Speech API (no incluidos en lib.dom de TS). */
 interface SpeechRecognitionResultLike {
@@ -19,7 +21,9 @@ interface SpeechRecognitionLike {
 }
 
 /**
- * Dictado por voz con la Web Speech API (Chrome/Android y Safari iOS 14.5+).
+ * Dictado por voz.
+ * - App Android: reconocimiento nativo del sistema (Google), funciona aunque el WebView no lo soporte.
+ * - Web: Web Speech API (Chrome y Safari).
  * El texto final pasa por el mismo intérprete que el registro por texto.
  */
 export function useSpeech(onFinal: (text: string) => void) {
@@ -30,6 +34,12 @@ export function useSpeech(onFinal: (text: string) => void) {
   cb.current = onFinal;
 
   useEffect(() => {
+    if (isNative()) {
+      NativeSpeech.available()
+        .then((r) => setSupported(r.available))
+        .catch(() => setSupported(false));
+      return;
+    }
     const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
     const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     if (!Ctor) return;
@@ -48,10 +58,38 @@ export function useSpeech(onFinal: (text: string) => void) {
     return () => r.stop();
   }, []);
 
+  const startNative = async () => {
+    const perm = await NativeSpeech.checkPermissions();
+    if (perm.speechRecognition !== "granted") {
+      const req = await NativeSpeech.requestPermissions();
+      if (req.speechRecognition !== "granted") return;
+    }
+    setListening(true);
+    try {
+      const res = await NativeSpeech.start({
+        language: "es-PE",
+        maxResults: 1,
+        prompt: "Di tu gasto: “18 soles almuerzo”",
+        partialResults: false,
+        popup: true,
+      });
+      const text = res.matches?.[0];
+      if (text) cb.current(text);
+    } catch {
+      /* cancelado por el usuario */
+    } finally {
+      setListening(false);
+    }
+  };
+
   return {
     supported,
     listening,
     start: () => {
+      if (isNative()) {
+        void startNative();
+        return;
+      }
       if (!rec.current) return;
       try {
         rec.current.start();
@@ -60,6 +98,9 @@ export function useSpeech(onFinal: (text: string) => void) {
         /* ya estaba escuchando */
       }
     },
-    stop: () => rec.current?.stop(),
+    stop: () => {
+      if (isNative()) NativeSpeech.stop().catch(() => {});
+      else rec.current?.stop();
+    },
   };
 }

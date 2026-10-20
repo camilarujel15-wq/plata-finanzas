@@ -57,7 +57,7 @@ export interface Notice {
 }
 
 type NewTx = Omit<Transaction, keyof Syncable | "tags" | "source"> &
-  Partial<Pick<Transaction, "tags" | "source">>;
+  Partial<Pick<Transaction, "tags" | "source" | "id">>;
 
 interface Actions {
   // Movimientos

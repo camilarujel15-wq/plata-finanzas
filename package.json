@@ -9,9 +9,19 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "cap:sync": "next build && cap sync android",
+    "android:open": "cap open android"
   },
   "dependencies": {
+    "@capacitor-community/speech-recognition": "6.0.1",
+    "@capacitor/android": "6.2.0",
+    "@capacitor/app": "6.0.2",
+    "@capacitor/core": "6.2.0",
+    "@capacitor/haptics": "6.0.2",
+    "@capacitor/splash-screen": "6.0.3",
+    "@capacitor/status-bar": "6.0.2",
+    "@fontsource-variable/plus-jakarta-sans": "5.1.1",
     "@supabase/supabase-js": "2.45.4",
     "lucide-react": "0.451.0",
     "next": "14.2.35",
@@ -22,6 +32,7 @@
     "zustand": "4.5.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "6.2.0",
     "@types/node": "^20.16.0",
     "@types/papaparse": "5.3.15",
     "@types/react": "^18.3.11",

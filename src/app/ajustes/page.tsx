@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Cloud, Download, Upload } from "lucide-react";
-import type { User } from "@supabase/supabase-js";
 import { COLLECTIONS, useStore, type FinanceData } from "@/lib/store/store";
 import { useUI } from "@/lib/store/ui";
 import { PageHeader, Section, Segmented } from "@/components/ui/bits";
 import { buildDemoData } from "@/lib/store/demo";
 import { seedCategories } from "@/lib/domain/defaults";
-import { getSupabase, isCloudEnabled } from "@/lib/sync/supabase";
+import { isCloudEnabled } from "@/lib/sync/supabase";
+import { signOut, useCloudUser } from "@/lib/sync/auth";
+import { CloudLogin } from "@/components/cloud/CloudLogin";
+import { useCategoriesByFrequency } from "@/lib/store/selectors";
+import { isNative } from "@/lib/native/platform";
+import { requestPinWidget } from "@/lib/native/widget";
 import { syncNow } from "@/lib/sync/engine";
 
 function download(name: string, content: string, type: string) {
@@ -74,17 +78,25 @@ export default function Ajustes() {
             <div className="label">Moneda principal</div>
             <Segmented value={s.settings.currency} onChange={(currency) => s.setSettings({ currency })} options={[{ value: "PEN", label: "Soles (S/)" }, { value: "USD", label: "Dólares ($)" }]} />
           </div>
-          <label className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between gap-3 text-sm">
             <span>
               Ocultar montos
               <span className="block text-xs text-muted">Para revisar la app en público</span>
             </span>
-            <input type="checkbox" className="h-5 w-5 accent-[rgb(var(--brand))]" checked={!!s.settings.hideAmounts} onChange={(e) => s.setSettings({ hideAmounts: e.target.checked })} />
-          </label>
+            <button
+              role="switch"
+              aria-checked={!!s.settings.hideAmounts}
+              onClick={() => s.setSettings({ hideAmounts: !s.settings.hideAmounts })}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition ${s.settings.hideAmounts ? "bg-brand" : "bg-line"}`}
+            >
+              <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${s.settings.hideAmounts ? "left-[22px]" : "left-0.5"}`} />
+            </button>
+          </div>
         </div>
       </Section>
 
       <CloudSection />
+      <WidgetSection />
 
       <Section title="Tus datos">
         <div className="card grid gap-2 p-4">
@@ -121,7 +133,7 @@ export default function Ajustes() {
           </button>
         </div>
       </Section>
-      <p className="mt-6 text-center text-xs text-muted">Plata v0.1 · Offline-first · Tus datos son tuyos</p>
+      <p className="mt-8 text-center text-xs text-muted">Plata 1.0 · Tus datos son tuyos</p>
     </div>
   );
 }
@@ -130,40 +142,35 @@ function CloudSection() {
   const toast = useUI((u) => u.toast);
   const pending = useStore((s) => s.outbox.length);
   const lastPulledAt = useStore((s) => s.lastPulledAt);
-  const [user, setUser] = useState<User | null>(null);
-  const [email, setEmail] = useState("");
+  const { user } = useCloudUser();
   const [busy, setBusy] = useState(false);
-  const sb = getSupabase();
 
-  useEffect(() => {
-    if (!sb) return;
-    sb.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data } = sb.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
-    return () => data.subscription.unsubscribe();
-  }, [sb]);
-
-  if (!isCloudEnabled() || !sb) {
+  if (!isCloudEnabled()) {
     return (
-      <Section title="Sincronización">
-        <div className="card p-4 text-sm text-muted">
-          <Cloud size={18} className="mb-1 text-brand" />
-          Modo local: los datos se guardan solo en este dispositivo. Configura <code>NEXT_PUBLIC_SUPABASE_URL</code> y{" "}
-          <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> para sincronizar entre dispositivos.
+      <Section title="Respaldo en la nube">
+        <div className="card p-4 text-sm leading-relaxed text-muted">
+          <Cloud size={20} className="mb-2 text-brand-strong" />
+          Esta versión aún no tiene la nube configurada: tus datos viven solo en este celular. Descarga un respaldo abajo mientras tanto.
         </div>
       </Section>
     );
   }
 
   return (
-    <Section title="Sincronización">
-      <div className="card grid gap-3 p-4 text-sm">
+    <Section title="Respaldo en la nube">
+      <div className="card grid gap-4 p-4 text-sm">
         {user ? (
           <>
-            <div>
-              Conectada como <b>{user.email}</b>
-              <div className="text-xs text-muted">
-                {pending ? `${pending} cambios pendientes` : "Todo sincronizado"}
-                {lastPulledAt && ` · última vez ${new Date(lastPulledAt).toLocaleString("es-PE")}`}
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pos/12 text-pos">
+                <Cloud size={20} />
+              </span>
+              <div className="min-w-0">
+                <div className="truncate font-semibold">{user.email}</div>
+                <div className="text-xs text-muted">
+                  {pending ? `${pending} cambios por subir` : "Todo respaldado ✓"}
+                  {lastPulledAt && ` · ${new Date(lastPulledAt).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}`}
+                </div>
               </div>
             </div>
             <div className="flex gap-2">
@@ -184,24 +191,67 @@ function CloudSection() {
               >
                 Sincronizar ahora
               </button>
-              <button className="btn-ghost" onClick={() => sb.auth.signOut()}>Salir</button>
+              <button className="btn-ghost" onClick={() => signOut()}>Salir</button>
             </div>
           </>
         ) : (
-          <form
-            className="grid gap-2"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setBusy(true);
-              const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/ajustes` } });
-              setBusy(false);
-              toast(error ? { title: "No se pudo enviar el enlace", body: error.message, tone: "warn" } : { title: "Revisa tu correo", body: "Te enviamos un enlace para entrar.", tone: "success" });
+          <>
+            <p className="leading-relaxed text-muted">Crea tu cuenta para que tus datos se respalden solos y puedas recuperarlos si cambias o pierdes el celular.</p>
+            <CloudLogin />
+          </>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+function WidgetSection() {
+  const s = useStore();
+  const toast = useUI((u) => u.toast);
+  const cats = useCategoriesByFrequency("expense");
+  const favs = s.settings.widgetFavorites ?? [];
+  const toggle = (id: string) => {
+    const next = favs.includes(id) ? favs.filter((x) => x !== id) : [...favs, id].slice(-4);
+    s.setSettings({ widgetFavorites: next });
+  };
+
+  return (
+    <Section title="Widget de pantalla de inicio">
+      <div className="card grid gap-4 p-4 text-sm">
+        <div className="hero p-4">
+          <div className="text-[11px] font-semibold text-emerald-200">Disponible real</div>
+          <div className="text-xl font-extrabold">S/ ••••</div>
+          <div className="mt-3 grid grid-cols-5 gap-1.5">
+            {[...(favs.length ? favs.map((id) => cats.find((c) => c.id === id)).filter(Boolean) : cats.slice(0, 4)), { id: "voice", icon: "🎙️", name: "Dictar" }].slice(0, 5).map((c) => (
+              <div key={c!.id} className="flex flex-col items-center rounded-xl bg-white/10 py-1.5 text-[9px] text-white/80">
+                <span className="text-lg">{c!.icon}</span>
+                <span className="w-full truncate px-1 text-center">{c!.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="leading-relaxed text-muted">
+          Toca una categoría en el widget, escribe el monto y listo: se guarda sin abrir la app. Elige hasta 4 (si no eliges, se usan las que más usas):
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {cats.map((c) => (
+            <button key={c.id} className={`chip ${favs.includes(c.id) ? "chip-on" : ""}`} onClick={() => toggle(c.id)}>
+              {c.icon} {c.name}
+            </button>
+          ))}
+        </div>
+        {isNative() ? (
+          <button
+            className="btn-dark"
+            onClick={async () => {
+              const r = await requestPinWidget();
+              if (!r.supported) toast({ title: "Agrégalo manualmente", body: "Mantén presionada la pantalla de inicio → Widgets → Plata.", tone: "warn" }, 7000);
             }}
           >
-            <p className="text-muted">Entra con un enlace mágico para respaldar y sincronizar tus datos.</p>
-            <input className="input" type="email" required placeholder="tu@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-            <button className="btn-primary" disabled={busy}>Enviarme el enlace</button>
-          </form>
+            📲 Agregar widget a mi pantalla
+          </button>
+        ) : (
+          <p className="rounded-2xl bg-surface-2 px-4 py-3 text-xs text-muted">El widget está disponible en la app de Android.</p>
         )}
       </div>
     </Section>

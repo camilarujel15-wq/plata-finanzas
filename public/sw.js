@@ -1,7 +1,7 @@
 /* Service worker de Plata: app shell offline + stale-while-revalidate para assets.
    Los datos viven en IndexedDB, así que la app funciona completa sin conexión. */
-const VERSION = "plata-v1";
-const SHELL = ["/", "/movimientos", "/reportes", "/mas", "/manifest.webmanifest", "/icon.svg"];
+const VERSION = "plata-v2";
+const SHELL = ["/", "/movimientos", "/reportes", "/mas", "/manifest.webmanifest", "/icon.svg", "/icons/icon-192.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

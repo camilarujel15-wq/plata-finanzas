@@ -14,6 +14,7 @@ import { addDays, dayLabel, today } from "@/lib/domain/dates";
 import { centsToInput } from "@/lib/domain/money";
 import { TRANSFER_KIND_LABEL, type TransferKind, type TxSource, type TxType } from "@/lib/domain/types";
 import { useSpeech } from "./useSpeech";
+import { haptic } from "@/lib/native/platform";
 
 const MAX_DIGITS = 9;
 
@@ -57,6 +58,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
   const [text, setText] = useState(qa.text ?? "");
   const [source, setSource] = useState<TxSource>(editing?.source ?? "manual");
   const [showAllCats, setShowAllCats] = useState(false);
+  const [textMode, setTextMode] = useState(Boolean(qa.text));
   const [shake, setShake] = useState(false);
   const textRef = useRef<HTMLInputElement>(null);
 
@@ -160,6 +162,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
           action: { label: "Deshacer", run: () => store.deleteTransaction(res.tx.id) },
         });
       }
+      haptic(notices.length ? "warn" : "success");
       for (const n2 of notices) toast({ title: n2.title, body: n2.body, tone: "warn" }, 7000);
       onClose();
     },
@@ -219,7 +222,8 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const title = editing ? "Editar movimiento" : "Nuevo movimiento";
+  const title = editing ? "Editar movimiento" : type === "income" ? "Nuevo ingreso" : type === "transfer" ? "Transferir" : "Nuevo gasto";
+  const selectedCat = cats.find((c) => c.id === categoryId);
 
   return (
     <Sheet
@@ -231,10 +235,11 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
         <div className="flex gap-2">
           {editing && (
             <button
-              className="btn-danger"
+              className="btn-danger px-4"
               aria-label="Eliminar"
               onClick={() => {
                 store.deleteTransaction(editing.id);
+                haptic("warn");
                 toast({ title: "Movimiento eliminado", action: { label: "Deshacer", run: () => store.restoreTransaction(editing.id) } });
                 onClose();
               }}
@@ -242,85 +247,100 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
               <Trash2 size={18} />
             </button>
           )}
-          <button className="btn-primary flex-1 py-3.5 text-base" onClick={() => save()} disabled={!amount}>
-            <Check size={18} /> {editing ? "Guardar cambios" : "Guardar"}
+          <button className="btn-primary flex-1 py-4 text-base" onClick={() => save()} disabled={!amount}>
+            <Check size={19} strokeWidth={2.6} /> {editing ? "Guardar cambios" : "Guardar"}
           </button>
         </div>
       }
     >
-      <Segmented
-        value={type}
-        onChange={(v) => {
-          setType(v);
-          setCategoryId(null);
-        }}
-        options={[
-          { value: "expense", label: "Gasto" },
-          { value: "income", label: "Ingreso" },
-          { value: "transfer", label: "Transferir" },
-        ]}
-      />
-
-      {/* Captura inteligente por texto o voz */}
-      <form
-        className="mt-3 flex items-center gap-2 rounded-xl border border-line bg-surface-2/60 px-3 py-1.5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          applyText(text, "text", true);
-        }}
-      >
-        <Sparkles size={16} className="shrink-0 text-brand" />
-        <input
-          ref={textRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder='Escribe "18 almuerzo yape"'
-          className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-muted/80"
-          enterKeyHint="done"
-          aria-label="Registro por texto"
+      <div className="flex items-center gap-2">
+        <Segmented
+          className="flex-1"
+          value={type}
+          onChange={(v) => {
+            setType(v);
+            setCategoryId(null);
+          }}
+          options={[
+            { value: "expense", label: "Gasto" },
+            { value: "income", label: "Ingreso" },
+            { value: "transfer", label: "Transferir" },
+          ]}
         />
         {speech.supported && (
           <button
             type="button"
             aria-label={speech.listening ? "Detener dictado" : "Dictar"}
             onClick={() => (speech.listening ? speech.stop() : speech.start())}
-            className={`tap rounded-full p-2 ${speech.listening ? "animate-pulse bg-neg text-white" : "bg-brand/15 text-brand"}`}
+            className={`tap flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${speech.listening ? "animate-pulse bg-neg text-white" : "bg-gradient-to-br from-emerald-300 to-emerald-500 text-brand-ink shadow-glow"}`}
           >
-            <Mic size={16} />
+            <Mic size={19} />
           </button>
         )}
-      </form>
-      {speech.listening && <p className="mt-1 text-center text-xs text-muted">Escuchando… di por ejemplo “Gasté 18 soles en almuerzo”</p>}
-
-      {/* Monto */}
-      <div className={`mt-4 text-center ${shake ? "animate-[pop_.3s]" : ""}`}>
-        <div className={`num text-5xl font-bold tracking-tight ${type === "income" ? "text-pos" : ""} ${shake ? "text-neg" : ""}`}>
-          <span className="mr-1 align-top text-2xl font-semibold text-muted">S/</span>
-          {digits || "0"}
-        </div>
-        {note && type !== "transfer" && <div className="mt-1 truncate text-sm text-muted">{note}</div>}
       </div>
 
+      {/* Monto: protagonista */}
+      <div className={`mt-3 flex flex-col items-center ${shake ? "animate-shake" : ""}`}>
+        <div className="flex h-4 items-center gap-1.5 text-xs font-semibold text-muted">
+          {selectedCat ? (
+            <>
+              <span className="text-sm">{selectedCat.icon}</span> {selectedCat.name} · {dayLabel(date)}
+            </>
+          ) : (
+            dayLabel(date)
+          )}
+        </div>
+        <div className={`num mt-1 flex items-start text-[48px] font-extrabold leading-none tracking-tight ${type === "income" ? "text-pos" : ""} ${shake ? "text-neg" : ""}`}>
+          <span className="mr-1.5 mt-1.5 text-2xl font-bold text-muted">S/</span>
+          {digits || "0"}
+        </div>
+        {note && type !== "transfer" && <div className="mt-2 max-w-full truncate rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">{note}</div>}
+      </div>
+
+      {/* Captura inteligente por texto */}
+      {textMode && (
+        <form
+          className="mt-3 flex animate-rise items-center gap-2 rounded-2xl bg-surface-2 py-1 pl-4 pr-1 ring-brand/30 focus-within:ring-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            applyText(text, "text", true);
+          }}
+        >
+          <Sparkles size={16} className="shrink-0 text-brand-strong" />
+          <input
+            ref={textRef}
+            autoFocus={!qa.text}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="18 almuerzo yape · ayer 25 taxi"
+            className="min-w-0 flex-1 bg-transparent py-2.5 text-sm font-medium outline-none placeholder:font-normal placeholder:text-muted/80"
+            enterKeyHint="done"
+            aria-label="Registro por texto"
+          />
+          <button className="tap rounded-xl bg-ink px-3 py-2 text-xs font-bold text-bg">OK</button>
+        </form>
+      )}
+
       {/* Cuentas */}
-      <div className="mt-4">
+      <div className="mt-3">
         <div className="label">{type === "transfer" ? "Desde" : type === "income" ? "A la cuenta" : "Pagado con"}</div>
         <AccountChips value={accountId} onChange={setAccountId} balances={balances} fmt={fmt} />
       </div>
 
       {type === "transfer" ? (
-        <div className="mt-3">
+        <div className="mt-4">
           <div className="label flex items-center gap-1">
-            <ArrowRight size={12} /> Hacia · <span className="normal-case text-brand">{TRANSFER_KIND_LABEL[transferKind]}</span>
+            <ArrowRight size={12} /> Hacia · <span className="normal-case tracking-normal text-brand-strong">{TRANSFER_KIND_LABEL[transferKind]}</span>
           </div>
           <AccountChips value={toAccountId} onChange={setToAccountId} balances={balances} fmt={fmt} exclude={accountId} />
         </div>
       ) : (
-        <div className="mt-4">
+        <div className="mt-3">
           <div className="label flex items-center justify-between">
-            <span>{editing ? "Categoría" : amount ? "Toca una categoría para guardar" : "Categoría"}</span>
+            <span>{editing ? "Categoría" : amount ? "Toca para guardar" : "Categoría"}</span>
             {suggestion && suggestion.categoryId !== categoryId && (
-              <button className="normal-case text-brand" onClick={() => onCategoryTap(suggestion.categoryId)}>
-                Sugerida: {store.categories.find((c) => c.id === suggestion.categoryId)?.name}
+              <button className="normal-case tracking-normal text-brand-strong" onClick={() => onCategoryTap(suggestion.categoryId)}>
+                ✨ {store.categories.find((c) => c.id === suggestion.categoryId)?.name}
               </button>
             )}
           </div>
@@ -329,15 +349,15 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
               <button
                 key={c.id}
                 onClick={() => onCategoryTap(c.id)}
-                className={`tap flex flex-col items-center gap-1 rounded-2xl border px-1 py-2 text-[11px] leading-tight ${categoryId === c.id ? "border-brand bg-brand/10" : "border-transparent bg-surface-2/70"}`}
+                className={`tap flex flex-col items-center gap-1 rounded-[18px] px-1 py-2 text-[11px] font-semibold leading-tight transition ${categoryId === c.id ? "bg-ink text-bg" : "bg-surface-2/80 text-ink"}`}
               >
-                <IconBubble icon={c.icon} color={c.color} size={34} />
+                <IconBubble icon={c.icon} color={c.color} size={32} />
                 <span className="line-clamp-1 w-full text-center">{c.name}</span>
               </button>
             ))}
             {cats.length > 7 && (
-              <button onClick={() => setShowAllCats((v) => !v)} className="tap flex flex-col items-center justify-center gap-1 rounded-2xl bg-surface-2/70 py-2 text-[11px] text-muted">
-                <span className="text-xl">{showAllCats ? "−" : "⋯"}</span>
+              <button onClick={() => setShowAllCats((v) => !v)} className="tap flex flex-col items-center justify-center gap-1 rounded-[18px] bg-surface-2/80 py-2 text-[11px] font-semibold text-muted">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface text-lg">{showAllCats ? "−" : "⋯"}</span>
                 {showAllCats ? "Menos" : "Más"}
               </button>
             )}
@@ -346,7 +366,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       )}
 
       {/* Detalles opcionales */}
-      <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 no-scrollbar">
         {[today(), addDays(today(), -1)].map((d) => (
           <button key={d} className={`chip ${date === d ? "chip-on" : ""}`} onClick={() => setDate(d)}>
             {dayLabel(d)}
@@ -360,20 +380,26 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
         <button className={`chip ${details ? "chip-on" : ""}`} onClick={() => setDetails((v) => !v)}>
           <StickyNote size={14} /> Nota
         </button>
+        <button className={`chip ${textMode ? "chip-on" : ""}`} onClick={() => setTextMode((v) => !v)}>
+          <Sparkles size={14} /> Escribir
+        </button>
       </div>
       {details && (
-        <div className="mt-3 grid gap-2">
+        <div className="mt-3 grid animate-rise gap-2">
           <input className="input" placeholder="Nota o comercio (ej. Tambo, Uber)" value={note} onChange={(e) => setNote(e.target.value)} />
           <input className="input" placeholder="Etiquetas: viaje, trabajo" value={tags} onChange={(e) => setTags(e.target.value)} />
         </div>
       )}
 
-      {/* Teclado numérico propio: sin saltos de layout ni teclado del sistema */}
-      <div className="mt-4 grid grid-cols-3 gap-2" aria-label="Teclado numérico">
+      {/* Teclado numérico propio */}
+      <div className="mt-2 grid grid-cols-3 gap-1" aria-label="Teclado numérico">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"].map((k) => (
           <button
             key={k}
-            onClick={() => press(k)}
+            onClick={() => {
+              haptic();
+              press(k);
+            }}
             onContextMenu={(e) => {
               if (k === "del") {
                 e.preventDefault();
@@ -381,9 +407,9 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
               }
             }}
             aria-label={k === "del" ? "Borrar" : k}
-            className="tap num flex h-12 items-center justify-center rounded-xl bg-surface-2 text-xl font-semibold active:bg-line"
+            className="num flex h-[44px] items-center justify-center rounded-2xl text-[22px] font-semibold transition active:scale-95 active:bg-surface-2"
           >
-            {k === "del" ? <Delete size={20} /> : k}
+            {k === "del" ? <Delete size={22} className="text-muted" /> : k}
           </button>
         ))}
       </div>
@@ -409,10 +435,10 @@ function AccountChips({
   return (
     <div className="-mx-5 flex gap-2 overflow-x-auto px-5 no-scrollbar">
       {accounts.map((a) => (
-        <button key={a.id} onClick={() => onChange(a.id)} className={`chip ${value === a.id ? "chip-on" : ""}`}>
-          <span>{a.icon}</span>
+        <button key={a.id} onClick={() => onChange(a.id)} className={`chip py-2 pl-2 ${value === a.id ? "chip-on" : ""}`}>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-sm">{a.icon}</span>
           <span>{a.name}</span>
-          <span className="num text-xs text-muted">{fmt(balances.get(a.id) ?? 0, { compact: true })}</span>
+          <span className={`num text-xs ${value === a.id ? "opacity-70" : "text-muted"}`}>{fmt(balances.get(a.id) ?? 0, { compact: true })}</span>
         </button>
       ))}
     </div>

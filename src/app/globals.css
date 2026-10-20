@@ -2,35 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Sistema visual "Plata"
+ * - Base clara y aireada, tarjetas blancas con sombras suaves (sin bordes duros).
+ * - Acento menta/esmeralda (dinero, crecimiento) sobre azul medianoche (confianza, premium).
+ * - Tipografía Plus Jakarta Sans con cifras tabulares.
+ */
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --bg: 246 247 249;
+  --font-sans: "Plus Jakarta Sans Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bg: 244 246 249;
   --surface: 255 255 255;
-  --surface-2: 240 242 245;
-  --line: 226 230 235;
-  --ink: 15 23 42;
-  --muted: 100 116 139;
-  --brand: 22 163 74;
-  --brand-ink: 255 255 255;
-  --pos: 22 163 74;
-  --neg: 220 38 38;
+  --surface-2: 240 242 246;
+  --line: 228 231 236;
+  --ink: 11 18 32;
+  --muted: 102 112 133;
+  --brand: 16 185 129;
+  --brand-strong: 4 120 87;
+  --brand-ink: 4 20 13;
+  --pos: 5 150 105;
+  --neg: 229 72 77;
   --warn: 217 119 6;
+  --shadow: 16 24 40;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: 9 11 15;
-    --surface: 20 23 30;
-    --surface-2: 30 34 43;
-    --line: 42 47 58;
-    --ink: 236 239 244;
-    --muted: 148 158 175;
-    --brand: 34 197 94;
-    --brand-ink: 4 20 10;
+    --bg: 7 11 20;
+    --surface: 15 21 34;
+    --surface-2: 25 33 50;
+    --line: 36 47 68;
+    --ink: 238 241 246;
+    --muted: 148 160 180;
+    --brand: 52 211 153;
+    --brand-strong: 110 231 183;
+    --brand-ink: 4 20 13;
     --pos: 74 222 128;
-    --neg: 248 113 113;
+    --neg: 249 112 102;
     --warn: 251 191 36;
+    --shadow: 0 0 0;
     color-scheme: dark;
   }
 }
@@ -44,11 +54,22 @@ body {
 }
 
 body {
-  font-feature-settings: "tnum" 1, "cv11" 1;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .num {
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -59,7 +80,7 @@ body {
 }
 
 .pb-safe {
-  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
 }
 .pt-safe {
   padding-top: env(safe-area-inset-top);
@@ -67,22 +88,34 @@ body {
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-line/70 bg-surface;
+    @apply rounded-[22px] bg-surface shadow-card dark:shadow-none dark:ring-1 dark:ring-line/70;
+  }
+  /* Tarjeta héroe: medianoche con resplandor menta e índigo */
+  .hero {
+    @apply relative overflow-hidden rounded-[28px] text-white;
+    background:
+      radial-gradient(120% 90% at 0% 0%, rgba(52, 211, 153, 0.28) 0%, transparent 55%),
+      radial-gradient(90% 80% at 100% 100%, rgba(99, 102, 241, 0.32) 0%, transparent 60%),
+      linear-gradient(145deg, #0b1220 0%, #101b2e 55%, #0d2a2a 100%);
+    box-shadow: 0 24px 48px -24px rgba(11, 18, 32, 0.55);
   }
   .tap {
-    @apply transition active:scale-[.97] active:opacity-80;
+    @apply transition duration-150 active:scale-[.97] active:opacity-90;
   }
   .input {
-    @apply w-full rounded-xl border border-line bg-surface px-3 py-3 text-base outline-none placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/20;
+    @apply w-full rounded-2xl border border-transparent bg-surface-2 px-4 py-3.5 text-[15px] outline-none transition placeholder:text-muted/70 focus:border-brand/60 focus:bg-surface focus:ring-4 focus:ring-brand/15;
   }
   .label {
-    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted;
+    @apply mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted;
   }
   .btn {
-    @apply tap inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-40;
+    @apply tap inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-[15px] font-semibold disabled:pointer-events-none disabled:opacity-40;
   }
   .btn-primary {
-    @apply btn bg-brand text-brand-ink;
+    @apply btn bg-gradient-to-br from-emerald-300 via-emerald-400 to-emerald-500 text-brand-ink shadow-glow;
+  }
+  .btn-dark {
+    @apply btn bg-ink text-bg;
   }
   .btn-ghost {
     @apply btn bg-surface-2 text-ink;
@@ -91,10 +124,13 @@ body {
     @apply btn bg-neg/10 text-neg;
   }
   .chip {
-    @apply tap inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-sm;
+    @apply tap inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-line;
   }
   .chip-on {
-    @apply border-brand bg-brand/10 font-medium text-ink;
+    @apply bg-ink text-bg ring-ink;
+  }
+  .link {
+    @apply text-[13px] font-semibold text-brand-strong;
   }
 }
 
