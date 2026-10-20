@@ -198,6 +198,19 @@ export function AccountForm({ initial, mode, onClose }: { initial: Partial<Accou
           </div>
         )}
 
+        {isCard && (
+          <div className="rounded-2xl bg-surface-2 p-3">
+            <div className="grid grid-cols-3 gap-2">
+              <NumField label="Día de cierre" value={a.closingDay} onChange={(v) => setA({ ...a, closingDay: v })} max={31} placeholder="20" />
+              <NumField label="Día de pago" value={a.dueDay} onChange={(v) => setA({ ...a, dueDay: v })} max={31} placeholder="15" />
+              <NumField label="TEA %" value={a.tea} onChange={(v) => setA({ ...a, tea: v })} max={300} placeholder="65" decimal />
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-muted">
+              Están en tu estado de cuenta: “fecha de cierre/facturación” y “último día de pago”. Lo que compras entre dos cierres se paga en la siguiente fecha de pago; si pagas el total, no pagas intereses. La TEA se usa para calcular tus compras en cuotas.
+            </p>
+          </div>
+        )}
+
         {mode === "investment" && (
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -267,5 +280,27 @@ export function AccountForm({ initial, mode, onClose }: { initial: Partial<Accou
         )}
       </div>
     </Sheet>
+  );
+}
+
+function NumField({ label, value, onChange, max, placeholder, decimal }: { label: string; value?: number | null; onChange: (v: number | null) => void; max: number; placeholder: string; decimal?: boolean }) {
+  const [text, setText] = useState(value != null ? String(value) : "");
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted">{label}</span>
+      <input
+        className="input num px-3 py-2.5 text-center"
+        inputMode={decimal ? "decimal" : "numeric"}
+        placeholder={placeholder}
+        value={text}
+        onChange={(e) => {
+          const raw = e.target.value.replace(",", ".").replace(decimal ? /[^\d.]/g : /\D/g, "");
+          setText(raw);
+          const n = Number(raw);
+          if (!raw || !Number.isFinite(n)) return onChange(null);
+          onChange(Math.min(max, decimal ? n : Math.max(1, Math.round(n))));
+        }}
+      />
+    </label>
   );
 }

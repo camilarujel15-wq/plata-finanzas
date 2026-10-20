@@ -14,6 +14,7 @@ export const TABLE: Record<Collection, string> = {
   contributions: "goal_contributions",
   rules: "category_rules",
   alerts: "budget_alerts",
+  recurring: "recurring_rules",
 };
 
 const snake = (s: string) => s.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
@@ -36,7 +37,7 @@ export function fromRow<T extends Syncable>(row: Record<string, unknown>): T {
 }
 
 // Orden que respeta las claves foráneas al subir.
-const PUSH_ORDER: Collection[] = ["accounts", "categories", "goals", "budgets", "transactions", "contributions", "rules", "alerts"];
+const PUSH_ORDER: Collection[] = ["accounts", "categories", "goals", "budgets", "recurring", "transactions", "contributions", "rules", "alerts"];
 
 let running: Promise<void> | null = null;
 

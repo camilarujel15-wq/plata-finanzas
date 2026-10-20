@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { ArrowDownLeft, ArrowUpRight, ChevronRight, Eye, EyeOff, Mic, Sparkles } from "lucide-react";
 import { useStore } from "@/lib/store/store";
 import { useUI } from "@/lib/store/ui";
-import { useAccounts, useBalances, useBaseTransactions, usePosition, useSpendableAccounts, useTransactions } from "@/lib/store/selectors";
+import { useAccounts, useBalances, useBaseTransactions, useForecast, usePosition, useSpendableAccounts, useTransactions } from "@/lib/store/selectors";
 import { Money, useFormat } from "@/components/ui/Money";
 import { Empty, IconBubble, Progress, Section } from "@/components/ui/bits";
 import { TxRow } from "@/components/tx/TxRow";
@@ -48,15 +48,15 @@ export default function Dashboard() {
     [baseTxs, s.categories, s.budgets, s.goals, s.contributions, fmt],
   );
   const goals = s.goals.filter((g) => !g.deletedAt && !g.archived);
+  const forecast = useForecast(fmt);
 
   if (!allAccounts.length) return <Onboarding />;
 
   // Ritmo diario sugerido: presupuesto restante (o ingreso neto) repartido en los días que faltan.
   const day = Number(today().slice(8, 10));
   const daysLeft = daysInPeriod(period) - day + 1;
-  const budgetLeft = budgets.reduce((a, b) => a + Math.max(0, b.remaining), 0);
-  const pool = budgets.length ? budgetLeft : Math.min(pos.available, month.income - month.expense);
-  const perDay = pool > 0 ? Math.floor(pool / daysLeft) : 0;
+  // Gasto diario seguro: disponible − fijos pendientes + ingresos por recibir, repartido en los días que faltan.
+  const perDay = forecast.safePerDay;
   const savingsRate = month.income > 0 ? (month.income - month.expense) / month.income : null;
 
   const initial = s.settings.displayName.trim() ? s.settings.displayName.trim().charAt(0).toUpperCase() : "🙂";
@@ -108,6 +108,38 @@ export default function Dashboard() {
           <span>Ver cuentas ›</span>
         </Link>
       </section>
+
+      {/* Fin de mes */}
+      <Link href="/mi-mes/" className="tap card mt-4 block p-4">
+        <div className="flex items-center gap-3">
+          <span className={`flex h-11 w-11 items-center justify-center rounded-2xl text-xl ${forecast.projectedEnd >= 0 ? "bg-pos/12" : "bg-neg/12"}`}>
+            {forecast.projectedEnd >= 0 ? "🗓️" : "⚠️"}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-medium text-muted">{forecast.projectedEnd >= 0 ? "Llegas a fin de mes con" : "A fin de mes te faltarían"}</div>
+            <Money value={Math.abs(forecast.projectedEnd)} hidden={hide} className={`text-lg font-extrabold ${forecast.projectedEnd >= 0 ? "text-pos" : "text-neg"}`} />
+          </div>
+          <span className="link">Mi mes ›</span>
+        </div>
+        {(() => {
+          const next = forecast.bills.find((b) => b.status !== "paid" && b.kind !== "income");
+          const c = forecast.comments.find((x) => x.tone === "bad" || x.tone === "warn") ?? forecast.comments[1];
+          return (
+            <div className="mt-3 grid gap-1.5 border-t border-line/70 pt-3 text-xs text-muted">
+              {next && (
+                <div className="flex justify-between gap-2">
+                  <span className="truncate">
+                    Próximo pago: {next.icon} {next.name} · {next.due.slice(8, 10)}/{next.due.slice(5, 7)}
+                  </span>
+                  <Money value={next.amount} hidden={hide} className="font-semibold text-ink" />
+                </div>
+              )}
+              {c && <div className="leading-snug">{c.icon} {c.text}</div>}
+              {!forecast.bills.length && <div>➕ Agrega tus gastos fijos para saber si llegas a fin de mes.</div>}
+            </div>
+          );
+        })()}
+      </Link>
 
       {/* Captura por texto/voz desde el inicio */}
       <div className="mt-4 flex gap-2">

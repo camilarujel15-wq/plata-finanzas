@@ -10,6 +10,7 @@ import type {
   CategoryRule,
   Goal,
   GoalContribution,
+  RecurringItem,
   Settings,
   Syncable,
   Transaction,
@@ -31,6 +32,7 @@ export interface FinanceData {
   contributions: GoalContribution[];
   rules: CategoryRule[];
   alerts: BudgetAlert[];
+  recurring: RecurringItem[];
 }
 
 export type Collection = keyof FinanceData;
@@ -43,6 +45,7 @@ export const COLLECTIONS: Collection[] = [
   "contributions",
   "rules",
   "alerts",
+  "recurring",
 ];
 
 export interface OutboxItem {
@@ -78,6 +81,8 @@ interface Actions {
   addContribution(goalId: string, amount: number, note?: string): void;
   deleteContribution(id: string): void;
   deleteRule(id: string): void;
+  upsertRecurring(r: Partial<RecurringItem> & Pick<RecurringItem, "name" | "type" | "amount" | "accountId" | "dayOfMonth">): RecurringItem;
+  deleteRecurring(id: string): void;
   // Ajustes y datos
   setSettings(patch: Partial<Settings>): void;
   replaceAll(data: FinanceData, settings?: Partial<Settings>): void;
@@ -112,6 +117,7 @@ const emptyData = (): FinanceData => ({
   contributions: [],
   rules: [],
   alerts: [],
+  recurring: [],
 });
 
 function stamp<T extends Syncable>(row: Omit<T, keyof Syncable> & Partial<Syncable>): T {
@@ -328,6 +334,20 @@ export const useStore = create<State & Actions>()(
           set((s) => ({
             rules: s.rules.map((r) => (r.id === id ? { ...r, deletedAt: nowISO(), updatedAt: nowISO() } : r)),
             outbox: enqueue(s.outbox, "rules", id),
+          }));
+        },
+
+        upsertRecurring(r) {
+          const prev = r.id ? get().recurring.find((x) => x.id === r.id) : undefined;
+          const row = stamp<RecurringItem>({ icon: "🧾", active: true, categoryId: null, toAccountId: null, ...prev, ...r });
+          set((s) => ({ recurring: upsert(s.recurring, row), outbox: enqueue(s.outbox, "recurring", row.id) }));
+          return row;
+        },
+
+        deleteRecurring(id) {
+          set((s) => ({
+            recurring: s.recurring.map((r) => (r.id === id ? { ...r, deletedAt: nowISO(), updatedAt: nowISO() } : r)),
+            outbox: enqueue(s.outbox, "recurring", id),
           }));
         },
 

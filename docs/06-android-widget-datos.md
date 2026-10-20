@@ -91,3 +91,9 @@ Cada persona instala el mismo `Plata.apk` y crea **su propia cuenta** de respald
 - **Archivar** oculta una cuenta de los totales y del registro rápido, pero conserva su historial. Las archivadas se ven y se restauran en *Cuentas → Archivadas*, en *Inversiones* (abajo) y en *Me deben → Saldadas y archivadas*.
 - **Me deben → persona:** historial con los préstamos (+), las devoluciones (−) y cuánto debía después de cada movimiento.
 - Migración: `supabase/migrations/0005_para_gastar_billeteras.sql`.
+
+## 6.10 Gastos fijos, "Mi mes" y tarjetas de crédito (v1.3)
+- **Gastos fijos** (`recurring_rules`): gasto, ingreso (sueldo) o aporte (cuota del terreno), con monto aproximado, día del mes y cuenta. Un pago cuenta como hecho si se registró con el botón *Pagar* (`recurring_id`) o si hay un movimiento del mes con el mismo nombre o categoría y un monto parecido (±25 %).
+- **Mi mes:** proyección = disponible para gastar − fijos pendientes + ingresos por recibir − gasto variable estimado. El gasto variable usa el ritmo del mes, o el de los últimos 60 días si aún no pasan 7 días del mes, sin contar los fijos. También muestra comentarios, el calendario de pagos y el detalle de cada tarjeta.
+- **Tarjetas** (`closing_day`, `due_day`, `tea`): lo comprado entre dos cierres se factura en el siguiente cierre y se paga en la fecha de pago (≈25 días después). Pagar el total = sin intereses. **En cuotas:** la cuota k llega en el k-ésimo estado de cuenta y se calcula con el sistema francés `P·i/(1−(1+i)^−n)`, con `i = (1+TEA)^(1/12) − 1`; sin intereses = `P/n`. El disponible solo descuenta lo que vence (estados por pagar + ciclo actual), no las cuotas futuras.
+- Migración: `supabase/migrations/0006_gastos_fijos_tarjetas.sql`.

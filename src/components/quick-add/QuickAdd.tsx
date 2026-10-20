@@ -9,6 +9,8 @@ import { useUI } from "@/lib/store/ui";
 import { useStore } from "@/lib/store/store";
 import { useAccounts, useBalances, useCategoriesByFrequency, useFx, useSpendableAccounts } from "@/lib/store/selectors";
 import { convert } from "@/lib/domain/fx";
+import { DEFAULT_CLOSING_DAY, closingFor, dueFor, installmentPlan } from "@/lib/domain/card";
+import type { Account } from "@/lib/domain/types";
 import { symbol } from "@/components/ui/Money";
 import { MoneyInput } from "@/components/ui/MoneyInput";
 import { parseEntry } from "@/lib/domain/parse";
@@ -51,14 +53,18 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
     null;
 
   const [type, setType] = useState<TxType>(editing?.type ?? qa.type);
-  const [digits, setDigits] = useState(editing ? centsToInput(editing.amount) : "");
+  const [digits, setDigits] = useState(editing ? centsToInput(editing.amount) : qa.amount ? centsToInput(qa.amount) : "");
   const [accountId, setAccountId] = useState<string | null>(editing?.accountId ?? defaultAccount);
   const [toAccountId, setToAccountId] = useState<string | null>(
     editing?.toAccountId ?? qa.toAccountId ?? accounts.find((a) => a.id !== defaultAccount)?.id ?? null,
   );
-  const [categoryId, setCategoryId] = useState<string | null>(editing?.categoryId ?? null);
+  const [categoryId, setCategoryId] = useState<string | null>(editing?.categoryId ?? qa.categoryId ?? null);
   const [date, setDate] = useState(editing?.date ?? today());
-  const [note, setNote] = useState(editing?.merchant || editing?.note || "");
+  const [note, setNote] = useState(editing?.merchant || editing?.note || qa.note || "");
+  const recurringId = editing?.recurringId ?? qa.recurringId ?? null;
+  const [installments, setInstallments] = useState<number>(editing?.installments ?? 1);
+  const [interestFree, setInterestFree] = useState<boolean>(editing?.installmentRate === 0);
+  const [teaText, setTeaText] = useState<string>(editing?.installmentRate ? String(editing.installmentRate) : "");
   const [tags, setTags] = useState(editing?.tags.join(", ") ?? "");
   const [details, setDetails] = useState(Boolean(editing) || Boolean(qa.toAccountId) || Boolean(qa.fromAccountId));
   const [text, setText] = useState(qa.text ?? "");
@@ -161,6 +167,10 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
         note: undefined,
         tags: tags.split(",").map((x) => x.trim().replace(/^#/, "")).filter(Boolean),
         source: over.source ?? source,
+        recurringId,
+        ...(t === "expense" && src?.type === "credit_card" && installments > 1
+          ? { installments, installmentRate: interestFree ? 0 : Number(teaText.replace(",", ".")) || src.tea || 0 }
+          : { installments: null, installmentRate: null }),
       };
 
       let notices;
@@ -186,7 +196,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       for (const n2 of notices) toast({ title: n2.title, body: n2.body, tone: "warn" }, 7000);
       onClose();
     },
-    [type, amount, accountId, toAccountId, categoryId, note, tags, date, source, editing, store, allAccounts, kindFor, toAmountOverride, fx, toast, fmt, onClose],
+    [type, amount, accountId, toAccountId, categoryId, note, tags, date, source, editing, store, allAccounts, kindFor, toAmountOverride, fx, toast, fmt, onClose, recurringId, installments, interestFree, teaText],
   );
 
   /** Aplica el texto/voz interpretado. Si está completo, guarda directamente. */
@@ -347,6 +357,21 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
         <AccountChips value={accountId} onChange={setAccountId} balances={balances} fmt={fmt} includeAll={type === "transfer"} />
       </div>
 
+      {type === "expense" && fromAcc?.type === "credit_card" && (
+        <CardPlan
+          card={fromAcc}
+          amount={amount}
+          date={date}
+          installments={installments}
+          setInstallments={setInstallments}
+          interestFree={interestFree}
+          setInterestFree={setInterestFree}
+          teaText={teaText}
+          setTeaText={setTeaText}
+          fmt={(v) => fmt(v, { currency: fromAcc.currency })}
+        />
+      )}
+
       {type === "transfer" ? (
         <div className="mt-4">
           <div className="label flex items-center gap-1">
@@ -489,6 +514,98 @@ function AccountChips({
           <span className={`num text-xs ${value === a.id ? "opacity-70" : "text-muted"}`}>{fmt(balances.get(a.id) ?? 0, { compact: true, currency: a.currency })}</span>
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Tarjeta de crédito: pago total (sin intereses) o en cuotas, con la cuota y los intereses calculados. */
+function CardPlan({
+  card,
+  amount,
+  date,
+  installments,
+  setInstallments,
+  interestFree,
+  setInterestFree,
+  teaText,
+  setTeaText,
+  fmt,
+}: {
+  card: Account;
+  amount: number;
+  date: string;
+  installments: number;
+  setInstallments: (n: number) => void;
+  interestFree: boolean;
+  setInterestFree: (v: boolean) => void;
+  teaText: string;
+  setTeaText: (v: string) => void;
+  fmt: (v: number) => string;
+}) {
+  const closingDay = card.closingDay ?? DEFAULT_CLOSING_DAY;
+  const firstDue = dueFor(closingFor(date, closingDay), card);
+  const tea = interestFree ? 0 : Number(teaText.replace(",", ".")) || card.tea || 0;
+  const plan = installmentPlan(amount, installments, tea);
+  const ddmm = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
+  return (
+    <div className="mt-3 rounded-2xl bg-surface-2/70 p-3">
+      <div className="label mb-1.5">¿Cómo lo pagarás?</div>
+      <div className="flex gap-2">
+        <button className={`chip flex-1 justify-center ${installments === 1 ? "chip-on" : ""}`} onClick={() => setInstallments(1)}>
+          Pago total
+        </button>
+        <button className={`chip flex-1 justify-center ${installments > 1 ? "chip-on" : ""}`} onClick={() => installments === 1 && setInstallments(3)}>
+          En cuotas
+        </button>
+      </div>
+      {installments === 1 ? (
+        <p className="mt-2 text-xs text-muted">
+          Sin intereses si pagas el total del estado de cuenta antes del <b className="text-ink">{ddmm(firstDue)}</b>
+          {!card.closingDay && " (configura el cierre y pago de tu tarjeta en Cuentas)"}.
+        </p>
+      ) : (
+        <div className="mt-2 grid gap-2">
+          <div className="-mx-3 flex gap-1.5 overflow-x-auto px-3 no-scrollbar">
+            {[2, 3, 6, 9, 12, 18, 24, 36].map((n) => (
+              <button key={n} className={`chip shrink-0 px-3 ${installments === n ? "chip-on" : ""}`} onClick={() => setInstallments(n)}>
+                {n}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <button className={`chip ${interestFree ? "chip-on" : ""}`} onClick={() => setInterestFree(!interestFree)}>
+              {interestFree ? "✓ " : ""}Sin intereses (promo)
+            </button>
+            {!interestFree && (
+              <label className="flex flex-1 items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-sm ring-1 ring-line">
+                <span className="text-xs text-muted">TEA</span>
+                <input
+                  className="num w-full bg-transparent text-right outline-none"
+                  inputMode="decimal"
+                  placeholder={card.tea ? String(card.tea) : "ej. 65"}
+                  value={teaText}
+                  onChange={(e) => setTeaText(e.target.value)}
+                />
+                <span className="text-xs text-muted">%</span>
+              </label>
+            )}
+          </div>
+          {amount > 0 && (
+            <p className="text-xs leading-relaxed text-muted">
+              <b className="text-ink">{installments} cuotas de {fmt(plan.cuota)}</b>
+              {plan.interest > 0 ? (
+                <>
+                  {" "}· pagarás <b className="text-warn">{fmt(plan.interest)} de intereses</b> (total {fmt(plan.total)})
+                </>
+              ) : (
+                " · sin intereses"
+              )}
+              . La 1.ª cuota vence el {ddmm(firstDue)}.
+              {!interestFree && !tea && " Escribe la TEA para calcular intereses."}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

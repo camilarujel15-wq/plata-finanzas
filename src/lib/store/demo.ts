@@ -1,4 +1,4 @@
-import type { Account, Budget, Goal, GoalContribution, Transaction } from "../domain/types";
+import type { Account, Budget, Goal, GoalContribution, RecurringItem, Transaction } from "../domain/types";
 import type { FinanceData } from "./store";
 import { seedCategories } from "../domain/defaults";
 import { addDays, today } from "../domain/dates";
@@ -18,7 +18,7 @@ export function buildDemoData(): FinanceData {
   const aho = acc("Ahorros", "savings", 450000, "🐷", "#db2777", 1);
   const yape = acc("Yape", "wallet", 0, "📱", "#7c3aed", 2, null, { linkedAccountId: bcp.id });
   const cash = acc("Efectivo", "cash", 8000, "💵", "#16a34a", 3);
-  const visa = acc("Visa Interbank", "credit_card", -65000, "💳", "#0f172a", 4, 800000);
+  const visa = acc("Visa Interbank", "credit_card", -65000, "💳", "#0f172a", 4, 800000, { closingDay: 20, dueDay: 15, tea: 62 });
   const usd = acc("Ahorros dólares", "savings", 120000, "💵", "#0891b2", 5, null, { currency: "USD" });
   const terreno = acc("Terreno Lurín", "investment", 600000, "🏡", "#6366f1", 6, null, { investmentKind: "property", targetAmount: 4500000, note: "Lote 14 · cuota mensual" });
   const curso = acc("Diplomado Data", "investment", 0, "🎓", "#8b5cf6", 7, null, { investmentKind: "education", targetAmount: 320000 });
@@ -75,6 +75,8 @@ export function buildDemoData(): FinanceData {
     if (dom % 9 === 0) add({ type: "expense", amount: 4500, accountId: yape.id, categoryId: cat("pets"), date, merchant: "Croquetas Max" });
   }
 
+  add({ type: "expense", amount: 189900, accountId: visa.id, categoryId: cat("shopping"), date: addDays(today(), -40), merchant: "Laptop Ripley", installments: 12, installmentRate: 62 });
+  add({ type: "expense", amount: 45000, accountId: visa.id, categoryId: cat("travel"), date: addDays(today(), -12), merchant: "Pasajes Cusco", installments: 3, installmentRate: 0 });
   add({ type: "transfer", amount: 30000, accountId: yape.id, toAccountId: lucia.id, transferKind: "loan", date: addDays(today(), -20), note: "Préstamo a Lucía" });
   add({ type: "transfer", amount: 10000, accountId: lucia.id, toAccountId: yape.id, transferKind: "repayment", date: addDays(today(), -6), note: "Abono Lucía" });
 
@@ -93,5 +95,18 @@ export function buildDemoData(): FinanceData {
     { ...base, id: uid(), goalId: fund.id, amount: 300000, date: addDays(today(), -90) },
   ];
 
-  return { accounts, categories, transactions, budgets, goals: [trip, fund], contributions, rules: [], alerts: [] };
+  const rec = (name: string, type: RecurringItem["type"], amount: number, dayOfMonth: number, icon: string, accountId: string, extra: Partial<RecurringItem> = {}): RecurringItem => ({
+    ...base, id: uid(), name, type, amount, dayOfMonth, icon, accountId, active: true, categoryId: null, toAccountId: null, ...extra,
+  });
+  const recurring: RecurringItem[] = [
+    rec("Sueldo", "income", 520000, 1, "💼", bcp.id, { categoryId: cat("salary") }),
+    rec("Alquiler", "expense", 150000, 1, "🏠", bcp.id, { categoryId: cat("home") }),
+    rec("Cuota terreno", "transfer", 75000, 3, "🏡", bcp.id, { toAccountId: terreno.id }),
+    rec("Internet Movistar", "expense", 11990, 5, "📶", bcp.id, { categoryId: cat("utilities") }),
+    rec("Netflix", "expense", 4490, 5, "🎬", visa.id, { categoryId: cat("subscriptions") }),
+    rec("Luz del Sur", "expense", 11000, 12, "💡", bcp.id, { categoryId: cat("utilities") }),
+    rec("Celular Claro", "expense", 6990, 22, "📱", bcp.id, { categoryId: cat("utilities") }),
+  ];
+
+  return { accounts, categories, transactions, budgets, goals: [trip, fund], contributions, rules: [], alerts: [], recurring };
 }

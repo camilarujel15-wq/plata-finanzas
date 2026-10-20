@@ -51,6 +51,12 @@ export interface Account extends Syncable {
   includeInAvailable?: boolean | null;
   /** Billetera vinculada (Yape, Plin…): no tiene saldo propio, mueve el saldo de esta cuenta. */
   linkedAccountId?: ID | null;
+  /** Tarjetas: día de cierre (corte) del estado de cuenta, 1-31. */
+  closingDay?: number | null;
+  /** Tarjetas: día límite de pago, 1-31 (suele ser ~25 días después del cierre). */
+  dueDay?: number | null;
+  /** Tarjetas: TEA de compras en cuotas, en % (p. ej. 65). */
+  tea?: number | null;
 }
 
 export interface Category extends Syncable {
@@ -85,6 +91,27 @@ export interface Transaction extends Syncable {
   importId?: ID | null;
   /** Huella para deduplicar importaciones. */
   importHash?: string | null;
+  /** Compras con tarjeta en cuotas: número de cuotas (1 o vacío = pago total). */
+  installments?: number | null;
+  /** TEA aplicada a las cuotas en % (0 = cuotas sin intereses). */
+  installmentRate?: number | null;
+  /** Gasto/ingreso fijo al que corresponde este pago. */
+  recurringId?: ID | null;
+}
+
+/** Gasto o ingreso fijo mensual (alquiler, luz, sueldo, cuota del terreno…). */
+export interface RecurringItem extends Syncable {
+  name: string;
+  /** expense = gasto fijo · income = ingreso fijo · transfer = aporte (p. ej. a una inversión). */
+  type: TxType;
+  /** Monto aproximado en la moneda de la cuenta. */
+  amount: number;
+  accountId: ID;
+  toAccountId?: ID | null;
+  categoryId?: ID | null;
+  dayOfMonth: number;
+  icon: string;
+  active: boolean;
 }
 
 export interface Budget extends Syncable {

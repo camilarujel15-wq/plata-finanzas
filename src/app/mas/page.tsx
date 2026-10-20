@@ -7,6 +7,8 @@ import { useStore } from "@/lib/store/store";
 import { isCloudEnabled } from "@/lib/sync/supabase";
 
 const items = [
+  { href: "/mi-mes/", icon: "🗓️", color: "#10b981", title: "Mi mes", body: "¿Llego a fin de mes? Pagos, tarjetas y consejos" },
+  { href: "/gastos-fijos/", icon: "🧾", color: "#0ea5e9", title: "Gastos fijos", body: "Alquiler, luz, internet, cuotas, sueldo" },
   { href: "/cuentas/", icon: "🏦", color: "#2563eb", title: "Cuentas", body: "Bancos, ahorros, tarjetas, wallets y efectivo" },
   { href: "/inversiones/", icon: "📈", color: "#6366f1", title: "Inversiones", body: "Terreno en cuotas, cursos, fondos, negocio" },
   { href: "/me-deben/", icon: "🤝", color: "#f59e0b", title: "Me deben", body: "Quién te debe, cuánto y cuándo paga" },

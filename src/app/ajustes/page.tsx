@@ -57,7 +57,9 @@ export default function Ajustes() {
   const importJson = async (file: File) => {
     try {
       const parsed = JSON.parse(await file.text()) as { version: number; settings?: object; data: FinanceData };
-      if (!parsed.data || !COLLECTIONS.every((c) => Array.isArray(parsed.data[c]))) throw new Error();
+      if (!parsed.data || !Array.isArray(parsed.data.accounts) || !Array.isArray(parsed.data.transactions)) throw new Error();
+      // Respaldos de versiones anteriores pueden no traer colecciones nuevas.
+      for (const c of COLLECTIONS) if (!Array.isArray(parsed.data[c])) (parsed.data as unknown as Record<string, unknown[]>)[c] = [];
       if (!confirm("Esto reemplazará los datos de este dispositivo. ¿Continuar?")) return;
       s.replaceAll(parsed.data, parsed.settings);
       toast({ title: "Respaldo restaurado", tone: "success" });
@@ -125,7 +127,7 @@ export default function Ajustes() {
             className="btn-danger"
             onClick={() => {
               if (!confirm("Se borrarán todos los datos de este dispositivo. Descarga un respaldo antes si lo necesitas. ¿Continuar?")) return;
-              s.replaceAll({ accounts: [], categories: seedCategories(), transactions: [], budgets: [], goals: [], contributions: [], rules: [], alerts: [] }, { onboarded: false, defaultAccountId: null, lastAccountId: null });
+              s.replaceAll({ accounts: [], categories: seedCategories(), transactions: [], budgets: [], goals: [], contributions: [], rules: [], alerts: [], recurring: [] }, { onboarded: false, defaultAccountId: null, lastAccountId: null });
               toast({ title: "Datos borrados" });
             }}
           >

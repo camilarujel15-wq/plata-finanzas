@@ -5,6 +5,9 @@ import { useStore } from "./store";
 import { accountBalances, position } from "../domain/balances";
 import { DEFAULT_USD_RATE, normalizeTransactions, type Fx } from "../domain/fx";
 import { isSpendable } from "../domain/types";
+import { cardSchedule } from "../domain/card";
+import { forecastMonth } from "../domain/plan";
+import { today } from "../domain/dates";
 import type { Category } from "../domain/types";
 
 export function useAccounts(includeArchived = false) {
@@ -52,13 +55,24 @@ export function useFx(): Fx {
   return useMemo(() => ({ base, usdRate }), [base, usdRate]);
 }
 
+/** Deuda que vence ahora en cada tarjeta (sin las cuotas que se cobrarán en meses futuros). */
+export function useCardCurrentDebt() {
+  const accounts = useStore((s) => s.accounts);
+  const txs = useStore((s) => s.transactions);
+  return useMemo(() => {
+    const t = today();
+    return new Map(accounts.filter((a) => a.type === "credit_card" && !a.deletedAt).map((a) => [a.id, cardSchedule(a, txs, t).currentDebt]));
+  }, [accounts, txs]);
+}
+
 export function usePosition() {
   const accounts = useStore((s) => s.accounts);
   const goals = useStore((s) => s.goals);
   const contributions = useStore((s) => s.contributions);
   const balances = useBalances();
   const fx = useFx();
-  return useMemo(() => position(accounts, balances, goals, contributions, fx), [accounts, balances, goals, contributions, fx]);
+  const cardDebt = useCardCurrentDebt();
+  return useMemo(() => position(accounts, balances, goals, contributions, fx, cardDebt), [accounts, balances, goals, contributions, fx, cardDebt]);
 }
 
 /** Movimientos con montos convertidos a la moneda principal (para totales, reportes y presupuestos). */
@@ -96,4 +110,19 @@ export function useCategoriesByFrequency(kind: Category["kind"]) {
 export function useMoneyFormat() {
   const { currency, locale } = useStore((s) => s.settings);
   return { currency, locale };
+}
+
+/** Proyección de fin de mes con gastos fijos, tarjetas y ritmo de gasto. */
+export function useForecast(fmt: (cents: number) => string) {
+  const accounts = useStore((s) => s.accounts);
+  const categories = useStore((s) => s.categories);
+  const recurring = useStore((s) => s.recurring);
+  const transactions = useTransactions();
+  const baseTransactions = useBaseTransactions();
+  const pos = usePosition();
+  const fx = useFx();
+  return useMemo(
+    () => forecastMonth({ accounts, categories, transactions, baseTransactions, recurring: recurring ?? [], available: pos.available, fx, fmt, today: today() }),
+    [accounts, categories, transactions, baseTransactions, recurring, pos.available, fx, fmt],
+  );
 }

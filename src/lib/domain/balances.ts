@@ -85,6 +85,8 @@ export function position(
   goals: Goal[],
   contributions: GoalContribution[],
   fx: Fx = { base: "PEN", usdRate: 3.75 },
+  /** Deuda actual de cada tarjeta sin cuotas futuras (ver cardSchedule). Si se omite, se usa el saldo completo. */
+  cardCurrentDebt?: Map<string, number>,
 ): Position {
   let assets = 0;
   let spendable = 0;
@@ -99,7 +101,7 @@ export function position(
     const forSpending = countsForAvailable(a);
     if (a.type === "credit_card") {
       debt += Math.max(0, -b);
-      if (forSpending) spendableDebt += Math.max(0, -b);
+      if (forSpending) spendableDebt += cardCurrentDebt?.has(a.id) ? toBase(Math.max(0, cardCurrentDebt.get(a.id)!), a.currency, fx) : Math.max(0, -b);
     } else if (a.type === "investment") investments += a.marketValue != null ? toBase(a.marketValue, a.currency, fx) : b;
     else if (a.type === "receivable") receivables += Math.max(0, b);
     else {

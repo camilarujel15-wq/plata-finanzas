@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { formatMoney } from "@/lib/domain/money";
 import { useMoneyFormat } from "@/lib/store/selectors";
 
@@ -28,6 +29,9 @@ export function Money({ value, className = "", sign, compact, tone, hidden, curr
 export const symbol = (c: string) => (c === "USD" ? "US$" : "S/");
 
 export function useFormat() {
-  const f = useMoneyFormat();
-  return (v: number, o: { sign?: boolean; compact?: boolean; currency?: string } = {}) => formatMoney(v, { ...f, ...o, currency: o.currency ?? f.currency });
+  const { currency, locale } = useMoneyFormat();
+  return useCallback(
+    (v: number, o: { sign?: boolean; compact?: boolean; currency?: string } = {}) => formatMoney(v, { locale, ...o, currency: o.currency ?? currency }),
+    [currency, locale],
+  );
 }
