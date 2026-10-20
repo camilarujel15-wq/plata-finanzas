@@ -38,7 +38,7 @@ export default function Metas() {
 
       {!goals.length && <Empty icon="🎯" title="Sin metas aún" body="Un viaje, un fondo de emergencia o una laptop. Ponle monto y fecha." action={<button className="btn-primary" onClick={() => setEditing({})}>Crear meta</button>} />}
 
-      <div className="grid gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
         {goals.map((g) => {
           const saved = goalSaved(g.id, s.contributions);
           const pct = g.targetAmount ? saved / g.targetAmount : 0;
@@ -185,7 +185,7 @@ function ContributionSheet({ goal, sign, onClose }: { goal: Goal; sign: 1 | -1; 
         </button>
       }
     >
-      <div className="grid gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <MoneyInput value={amount} onChange={setAmount} autoFocus />
         <div className="flex gap-2">
           {quick.map((q) => (

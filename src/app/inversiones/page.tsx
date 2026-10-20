@@ -51,7 +51,7 @@ export default function Inversiones() {
         </div>
       )}
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3">
         {list.map((a) => {
           const paid = balances.get(a.id) ?? 0;
           const pct = a.targetAmount ? paid / a.targetAmount : null;
@@ -67,7 +67,7 @@ export default function Inversiones() {
                     {a.note ? ` · ${a.note}` : ""}
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <div className="text-[11px] font-medium text-muted">Aportado</div>
                   <Money value={paid} hidden={hide} currency={a.currency} className="font-bold" />
                 </div>
@@ -91,8 +91,8 @@ export default function Inversiones() {
                 </div>
               )}
               <div className="mt-3 flex gap-2">
-                <button className="btn-primary flex-1 py-2.5" onClick={() => openQuickAdd({ type: "transfer", toAccountId: a.id })}>
-                  <Plus size={16} /> Registrar aporte / cuota
+                <button className="btn-primary min-w-0 flex-1 py-2.5" onClick={() => openQuickAdd({ type: "transfer", toAccountId: a.id })}>
+                  <Plus size={16} className="shrink-0" /> <span className="truncate">Registrar cuota</span>
                 </button>
                 <Link href={`/movimientos/?account=${a.id}`} className="btn-ghost py-2.5">
                   Historial

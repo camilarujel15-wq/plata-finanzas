@@ -96,16 +96,18 @@ export default function Dashboard() {
             </span>
           </div>
         )}
-        <Link href="/cuentas/" className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-white/50">
-          <span>
-            Patrimonio total <Money value={pos.netWorth} hidden={hide} compact className="font-semibold text-white/75" />
+        <Link href="/cuentas/" className="mt-3 flex items-center gap-3 border-t border-white/10 pt-3 text-xs text-white/50">
+          <span className="min-w-0 flex-1 leading-relaxed">
+            <span className="whitespace-nowrap">
+              Patrimonio <Money value={pos.netWorth} hidden={hide} compact className="font-semibold text-white/75" />
+            </span>
             {pos.spendableDebt > 0 && (
-              <>
+              <span className="whitespace-nowrap">
                 {" "}· Tarjetas <Money value={-pos.spendableDebt} hidden={hide} compact className="font-semibold text-rose-200/80" />
-              </>
+              </span>
             )}
           </span>
-          <span>Ver cuentas ›</span>
+          <span className="shrink-0 whitespace-nowrap">Cuentas ›</span>
         </Link>
       </section>
 
@@ -119,22 +121,22 @@ export default function Dashboard() {
             <div className="text-xs font-medium text-muted">{forecast.projectedEnd >= 0 ? "Llegas a fin de mes con" : "A fin de mes te faltarían"}</div>
             <Money value={Math.abs(forecast.projectedEnd)} hidden={hide} className={`text-lg font-extrabold ${forecast.projectedEnd >= 0 ? "text-pos" : "text-neg"}`} />
           </div>
-          <span className="link">Mi mes ›</span>
+          <span className="link shrink-0 whitespace-nowrap">Mi mes ›</span>
         </div>
         {(() => {
           const next = forecast.bills.find((b) => b.status !== "paid" && b.kind !== "income");
           const c = forecast.comments.find((x) => x.tone === "bad" || x.tone === "warn") ?? forecast.comments[1];
           return (
-            <div className="mt-3 grid gap-1.5 border-t border-line/70 pt-3 text-xs text-muted">
+            <div className="mt-3 grid min-w-0 gap-1.5 border-t border-line/70 pt-3 text-xs text-muted">
               {next && (
-                <div className="flex justify-between gap-2">
-                  <span className="truncate">
-                    Próximo pago: {next.icon} {next.name} · {next.due.slice(8, 10)}/{next.due.slice(5, 7)}
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate">
+                    Próximo: {next.icon} {next.name} · {next.due.slice(8, 10)}/{next.due.slice(5, 7)}
                   </span>
-                  <Money value={next.amount} hidden={hide} className="font-semibold text-ink" />
+                  <Money value={next.amount} hidden={hide} className="shrink-0 font-semibold text-ink" />
                 </div>
               )}
-              {c && <div className="leading-snug">{c.icon} {c.text}</div>}
+              {c && <div className="min-w-0 break-words leading-snug">{c.icon} {c.text}</div>}
               {!forecast.bills.length && <div>➕ Agrega tus gastos fijos para saber si llegas a fin de mes.</div>}
             </div>
           );

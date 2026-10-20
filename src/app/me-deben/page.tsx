@@ -56,7 +56,7 @@ export default function MeDeben() {
         </div>
       )}
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3">
         {pending.map((a) => {
           const owed = balances.get(a.id) ?? 0;
           const overdue = a.dueDate && a.dueDate < today();
@@ -73,13 +73,13 @@ export default function MeDeben() {
                     </span>
                   )}
                 </div>
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <Money value={owed} hidden={hide} currency={a.currency} className="text-lg font-extrabold" />
                   <div className="text-[11px] font-semibold text-brand-strong">Ver historial ›</div>
                 </div>
               </Link>
-              <div className="mt-3 flex gap-2">
-                <button className="btn-primary flex-1 py-2.5" onClick={() => openQuickAdd({ type: "transfer", fromAccountId: a.id })}>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button className="btn-primary py-2.5" onClick={() => openQuickAdd({ type: "transfer", fromAccountId: a.id })}>
                   <HandCoins size={16} /> Me pagó
                 </button>
                 <button className="btn-ghost py-2.5" onClick={() => openQuickAdd({ type: "transfer", toAccountId: a.id })}>

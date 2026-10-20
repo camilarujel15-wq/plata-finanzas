@@ -59,7 +59,7 @@ export default function MiMes() {
       </section>
 
       <Section title="Cómo vas">
-        <div className="grid gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
           {f.comments.map((c, i) => (
             <div key={i} className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm leading-snug ${TONE[c.tone]}`}>
               <span className="text-lg leading-none">{c.icon}</span>
@@ -88,7 +88,7 @@ export default function MiMes() {
 
       {f.cards.length > 0 && (
         <Section title="Tarjetas de crédito">
-          <div className="grid gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
             {f.cards.map(({ card, schedule }) => (
               <div key={card.id} className="card p-4 text-sm">
                 <div className="flex items-center justify-between">
