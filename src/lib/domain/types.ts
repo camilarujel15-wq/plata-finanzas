@@ -47,6 +47,10 @@ export interface Account extends Syncable {
   dueDate?: ISODate | null;
   /** Nota libre (concepto de la deuda, número de lote, etc.). */
   note?: string | null;
+  /** ¿Cuenta para "Disponible para gastar"? Si se omite, se usa el valor por tipo (ver countsForAvailable). */
+  includeInAvailable?: boolean | null;
+  /** Billetera vinculada (Yape, Plin…): no tiene saldo propio, mueve el saldo de esta cuenta. */
+  linkedAccountId?: ID | null;
 }
 
 export interface Category extends Syncable {
@@ -160,6 +164,12 @@ export const INVESTMENT_KIND_LABEL: Record<InvestmentKind, { label: string; icon
 };
 
 export const CURRENCY_LABEL: Record<Currency, string> = { PEN: "Soles (S/)", USD: "Dólares (US$)" };
+
+/** Por defecto: bancos, wallets, efectivo y tarjetas cuentan para gastar; ahorros no. */
+export function countsForAvailable(a: Pick<Account, "type" | "includeInAvailable">): boolean {
+  if (a.type === "investment" || a.type === "receivable") return false;
+  return a.includeInAvailable ?? a.type !== "savings";
+}
 
 /** Cuentas de dinero disponible: aparecen en el registro rápido y el widget. */
 export const isSpendable = (t: AccountType) => t !== "investment" && t !== "receivable";

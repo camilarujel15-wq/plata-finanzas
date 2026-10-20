@@ -16,7 +16,7 @@ export function buildDemoData(): FinanceData {
   });
   const bcp = acc("BCP Sueldo", "checking", 180000, "🏦", "#2563eb", 0);
   const aho = acc("Ahorros", "savings", 450000, "🐷", "#db2777", 1);
-  const yape = acc("Yape", "wallet", 12000, "📱", "#7c3aed", 2);
+  const yape = acc("Yape", "wallet", 0, "📱", "#7c3aed", 2, null, { linkedAccountId: bcp.id });
   const cash = acc("Efectivo", "cash", 8000, "💵", "#16a34a", 3);
   const visa = acc("Visa Interbank", "credit_card", -65000, "💳", "#0f172a", 4, 800000);
   const usd = acc("Ahorros dólares", "savings", 120000, "💵", "#0891b2", 5, null, { currency: "USD" });

@@ -84,3 +84,10 @@ Si en el futuro se agrega IA (por ejemplo leer fotos de boletas), el costo lo pa
 
 ## 6.8 Compartir la app con otras personas
 Cada persona instala el mismo `Plata.apk` y crea **su propia cuenta** de respaldo con su correo. Las reglas RLS de la base de datos hacen que cada quien vea solo sus datos, aunque todos usen el mismo proyecto de Supabase. El plan gratuito de Supabase alcanza de sobra para un grupo pequeño.
+
+## 6.9 Disponible para gastar y billeteras vinculadas (v1.2)
+- Cada cuenta tiene **“Para gastar”** (`include_in_available`). Por defecto: bancos, efectivo, wallets y tarjetas sí; ahorros no. El inicio muestra solo **Disponible para gastar** = saldo de esas cuentas − deuda de esas tarjetas − metas guardadas en ellas. El patrimonio completo está en *Cuentas*.
+- **Billetera vinculada** (`linked_account_id`): Yape/Plin no tienen saldo propio. Sus gastos se descuentan de la cuenta bancaria vinculada y muestran su mismo saldo, así el dinero no se duplica. Una “recarga” banco → billetera vinculada no cambia nada.
+- **Archivar** oculta una cuenta de los totales y del registro rápido, pero conserva su historial. Las archivadas se ven y se restauran en *Cuentas → Archivadas*, en *Inversiones* (abajo) y en *Me deben → Saldadas y archivadas*.
+- **Me deben → persona:** historial con los préstamos (+), las devoluciones (−) y cuánto debía después de cada movimiento.
+- Migración: `supabase/migrations/0005_para_gastar_billeteras.sql`.

@@ -103,7 +103,20 @@ export default function Inversiones() {
         })}
       </div>
 
-      {archived.length > 0 && <p className="mt-4 px-1 text-xs text-muted">{archived.length} inversión(es) archivada(s).</p>}
+      {archived.length > 0 && (
+        <div className="mt-6">
+          <h2 className="mb-2 px-1 text-sm font-semibold text-muted">Archivadas · tócalas para restaurar</h2>
+          <div className="card divide-y divide-line/60 opacity-80">
+            {archived.map((a) => (
+              <button key={a.id} onClick={() => setEditing(a)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
+                <IconBubble icon={a.icon} color={a.color} size={32} />
+                <span className="min-w-0 flex-1 truncate">{a.name}</span>
+                <Money value={balances.get(a.id) ?? 0} hidden={hide} currency={a.currency} className="text-sm" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {editing && <AccountForm initial={editing} mode="investment" onClose={() => setEditing(null)} />}
     </div>
   );

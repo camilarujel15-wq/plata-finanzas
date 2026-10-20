@@ -27,9 +27,13 @@ export function Onboarding() {
     });
 
   const start = () => {
+    let bankId: string | null = null;
     ACCOUNT_PRESETS.filter((p) => p.name in picked).forEach((p, i) => {
       const bal = picked[p.name] ?? 0;
-      s.upsertAccount({ ...p, sortOrder: i, initialBalance: p.type === "credit_card" ? -Math.abs(bal) : bal });
+      // Yape/Plin usan el saldo de la cuenta bancaria: se vinculan para no duplicar el dinero.
+      const linked = p.type === "wallet" && bankId ? bankId : null;
+      const row = s.upsertAccount({ ...p, sortOrder: i, initialBalance: linked ? 0 : p.type === "credit_card" ? -Math.abs(bal) : bal, linkedAccountId: linked });
+      if (p.type === "checking") bankId = row.id;
     });
     s.setSettings({ displayName: name.trim(), onboarded: true });
   };
@@ -119,7 +123,9 @@ export function Onboarding() {
                     {on && <Check size={14} strokeWidth={3} />}
                   </span>
                 </button>
-                {on && (
+                {on && p.type === "wallet" && "Cuenta sueldo" in picked ? (
+                  <p className="mt-2 animate-rise text-xs text-muted">🔗 Usará el saldo de tu Cuenta sueldo (no se duplica el dinero).</p>
+                ) : on && (
                   <div className="mt-3 animate-rise">
                     <MoneyInput
                       value={picked[p.name]}

@@ -10,7 +10,7 @@ import { Money } from "@/components/ui/Money";
 import { MoneyInput } from "@/components/ui/MoneyInput";
 import { Sheet } from "@/components/ui/Sheet";
 import { ACCOUNT_TYPE_ICON, EMOJIS, PALETTE } from "@/lib/domain/defaults";
-import { ACCOUNT_TYPE_LABEL, INVESTMENT_KIND_LABEL, type Account, type AccountType, type Currency, type InvestmentKind } from "@/lib/domain/types";
+import { ACCOUNT_TYPE_LABEL, INVESTMENT_KIND_LABEL, countsForAvailable, type Account, type AccountType, type Currency, type InvestmentKind } from "@/lib/domain/types";
 
 export type AccountMode = "account" | "investment" | "receivable";
 
@@ -49,7 +49,14 @@ export function AccountForm({ initial, mode, onClose }: { initial: Partial<Accou
     const ib = isCard ? -Math.abs(opening ?? 0) : opening ?? 0;
     // Préstamo que salió de una cuenta: la deuda nace en 0 y se registra la transferencia (descuenta tu cuenta).
     const lent = isNew && mode === "receivable" && lentFrom && ib > 0;
-    const row = s.upsertAccount({ ...(a as Account), name: a.name.trim(), initialBalance: lent ? 0 : ib, note: a.note?.trim() || null });
+    const linked = a.type === "wallet" ? a.linkedAccountId || null : null;
+    const row = s.upsertAccount({
+      ...(a as Account),
+      name: a.name.trim(),
+      initialBalance: lent || linked ? 0 : ib,
+      note: a.note?.trim() || null,
+      linkedAccountId: linked,
+    });
     if (lent) {
       s.addTransaction({ type: "transfer", transferKind: "loan", amount: ib, accountId: lentFrom, toAccountId: row.id, date: today(), merchant: a.note?.trim() || `Préstamo a ${row.name}` });
     }
@@ -134,7 +141,8 @@ export function AccountForm({ initial, mode, onClose }: { initial: Partial<Accou
           />
         </div>
 
-        <div>
+        {!(a.type === "wallet" && a.linkedAccountId) && (
+          <div>
           <label className="label" htmlFor="acc-bal">{labels.opening}</label>
           <MoneyInput id="acc-bal" value={opening} onChange={setOpening} currency={cur} />
           {current !== null && (
@@ -143,6 +151,45 @@ export function AccountForm({ initial, mode, onClose }: { initial: Partial<Accou
             </p>
           )}
         </div>
+        )}
+
+        {a.type === "wallet" && mode === "account" && (
+          <div className="rounded-2xl bg-surface-2 p-3">
+            <div className="label">¿De dónde sale el dinero de esta billetera?</div>
+            <div className="flex flex-wrap gap-2">
+              <button className={`chip ${!a.linkedAccountId ? "chip-on" : ""}`} onClick={() => setA({ ...a, linkedAccountId: null })}>
+                Tiene saldo propio
+              </button>
+              {spendable
+                .filter((x) => x.id !== a.id && x.type !== "wallet" && x.type !== "credit_card")
+                .map((x) => (
+                  <button key={x.id} className={`chip ${a.linkedAccountId === x.id ? "chip-on" : ""}`} onClick={() => setA({ ...a, linkedAccountId: x.id, currency: x.currency })}>
+                    {x.icon} {x.name}
+                  </button>
+                ))}
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-muted">
+              Yape y Plin usan el saldo de tu cuenta bancaria. Vincúlala: podrás elegir “Yape” al pagar, pero el dinero se descontará de tu banco y no se contará dos veces.
+            </p>
+          </div>
+        )}
+
+        {mode === "account" && !(a.type === "wallet" && a.linkedAccountId) && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2 p-3 text-sm">
+            <span>
+              <span className="font-semibold">Para gastar</span>
+              <span className="block text-xs text-muted">Suma a tu “Disponible para gastar” en el inicio</span>
+            </span>
+            <button
+              role="switch"
+              aria-checked={countsForAvailable(a as Account)}
+              onClick={() => setA({ ...a, includeInAvailable: !countsForAvailable(a as Account) })}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition ${countsForAvailable(a as Account) ? "bg-brand" : "bg-line"}`}
+            >
+              <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${countsForAvailable(a as Account) ? "left-[22px]" : "left-0.5"}`} />
+            </button>
+          </div>
+        )}
 
         {isCard && (
           <div>

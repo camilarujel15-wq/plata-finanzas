@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { useStore } from "@/lib/store/store";
+import { useSpendableAccounts } from "@/lib/store/selectors";
 import { PageHeader, Progress, Empty, EmojiPicker, SwatchPicker } from "@/components/ui/bits";
 import { Money, useFormat } from "@/components/ui/Money";
 import { MoneyInput } from "@/components/ui/MoneyInput";
@@ -104,7 +105,9 @@ export default function Metas() {
 
 function GoalForm({ initial, onClose }: { initial: Partial<Goal>; onClose: () => void }) {
   const s = useStore();
-  const [g, setG] = useState<Partial<Goal>>({ icon: "🎯", color: PALETTE[4], ...initial });
+  const accounts = useSpendableAccounts();
+  const firstSavings = accounts.find((a) => a.type === "savings")?.id ?? null;
+  const [g, setG] = useState<Partial<Goal>>({ icon: "🎯", color: PALETTE[4], accountId: initial.id ? null : firstSavings, ...initial });
   const ok = g.name?.trim() && g.targetAmount && g.targetAmount > 0;
   return (
     <Sheet
@@ -138,6 +141,20 @@ function GoalForm({ initial, onClose }: { initial: Partial<Goal>; onClose: () =>
             <label className="label" htmlFor="g-date">Fecha objetivo</label>
             <input id="g-date" type="date" className="input" min={today()} value={g.targetDate ?? ""} onChange={(e) => setG({ ...g, targetDate: e.target.value || null })} />
           </div>
+        </div>
+        <div>
+          <div className="label">¿Dónde guardas este dinero?</div>
+          <div className="flex flex-wrap gap-2">
+            {accounts.filter((a) => !a.linkedAccountId).map((a) => (
+              <button key={a.id} className={`chip ${g.accountId === a.id ? "chip-on" : ""}`} onClick={() => setG({ ...g, accountId: a.id })}>
+                {a.icon} {a.name}
+              </button>
+            ))}
+            <button className={`chip ${!g.accountId ? "chip-on" : ""}`} onClick={() => setG({ ...g, accountId: null })}>
+              Sin cuenta
+            </button>
+          </div>
+          <p className="mt-1.5 text-xs text-muted">Si está en una cuenta “para gastar” (o sin cuenta), lo apartado se descuenta de tu disponible.</p>
         </div>
         <div>
           <div className="label">Color</div>

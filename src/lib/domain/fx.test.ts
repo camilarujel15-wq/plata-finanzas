@@ -55,7 +55,40 @@ describe("inversiones y por cobrar", () => {
     expect(p.investments).toBe(150000); // curso con valor actual 0 no suma
     expect(p.receivables).toBe(15000);
     expect(p.debt).toBe(30000);
-    expect(p.available).toBe(620000);
+    // disponible = solo cuentas para gastar (bcp) − tarjeta; los ahorros en dólares no cuentan
+    expect(p.spendable).toBe(275000);
+    expect(p.available).toBe(245000);
     expect(p.netWorth).toBe(650000 - 30000 + 150000 + 15000);
+  });
+});
+
+describe("cuentas para gastar y billeteras vinculadas", () => {
+  it("Yape vinculado a BCP no duplica el dinero", () => {
+    const accounts = [acc("bcp", "checking", "PEN", 100000), acc("yape", "wallet", "PEN", 50000, { linkedAccountId: "bcp" })];
+    const txs = [
+      tx({ type: "expense", amount: 2000, accountId: "yape" }),
+      tx({ type: "transfer", amount: 10000, accountId: "bcp", toAccountId: "yape" }), // "recarga": no cambia nada
+    ];
+    const b = accountBalances(accounts, txs);
+    expect(b.get("bcp")).toBe(98000);
+    expect(b.get("yape")).toBe(98000); // muestra el saldo de su banco
+    const p = position(accounts, b, [], [], fx);
+    expect(p.assets).toBe(98000);
+    expect(p.available).toBe(98000);
+  });
+
+  it("se puede elegir qué cuentas cuentan para gastar y qué metas se descuentan", () => {
+    const accounts = [
+      acc("bcp", "checking", "PEN", 100000),
+      acc("aho", "savings", "PEN", 500000),
+      acc("aho2", "savings", "PEN", 70000, { includeInAvailable: true }),
+      acc("cash", "cash", "PEN", 20000, { includeInAvailable: false }),
+    ];
+    const goal = (id: string, accountId: string | null) => ({ id, name: id, targetAmount: 1, icon: "", color: "", archived: false, accountId, createdAt: "", updatedAt: "" });
+    const contrib = (goalId: string, amount: number) => ({ id: goalId + "c", goalId, amount, date: "2026-10-01", createdAt: "", updatedAt: "" });
+    const p = position(accounts, accountBalances(accounts, []), [goal("viaje", "aho"), goal("laptop", "bcp")], [contrib("viaje", 300000), contrib("laptop", 10000)], fx);
+    expect(p.spendable).toBe(170000);
+    expect(p.available).toBe(160000); // solo se descuenta la meta guardada en BCP
+    expect(p.netWorth).toBe(690000);
   });
 });

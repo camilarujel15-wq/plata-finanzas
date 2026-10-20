@@ -1,5 +1,6 @@
 import type { Account, Goal, GoalContribution, ISODate, Transaction } from "./types";
 import { toBase, type Fx } from "./fx";
+import { countsForAvailable } from "./types";
 
 export const alive = <T extends { deletedAt?: string | null }>(xs: T[]) => xs.filter((x) => !x.deletedAt);
 
@@ -23,16 +24,31 @@ export function accountBalances(
   until?: ISODate,
 ): Map<string, number> {
   const out = new Map<string, number>();
-  for (const a of accounts) out.set(a.id, a.initialBalance);
+  // Billeteras vinculadas (Yape → BCP): sus movimientos afectan a la cuenta de origen.
+  const link = new Map<string, string>();
+  for (const a of accounts) {
+    if (a.linkedAccountId && a.linkedAccountId !== a.id && accounts.some((x) => x.id === a.linkedAccountId)) link.set(a.id, a.linkedAccountId);
+  }
+  const target = (id: string) => link.get(id) ?? id;
+  for (const a of accounts) out.set(a.id, link.has(a.id) ? 0 : a.initialBalance);
   for (const tx of transactions) {
     if (tx.deletedAt) continue;
     if (until && tx.date > until) continue;
-    if (out.has(tx.accountId)) out.set(tx.accountId, out.get(tx.accountId)! + txDelta(tx, tx.accountId));
-    if (tx.type === "transfer" && tx.toAccountId && out.has(tx.toAccountId)) {
-      out.set(tx.toAccountId, out.get(tx.toAccountId)! + (tx.toAmount ?? tx.amount));
+    const from = target(tx.accountId);
+    if (out.has(from)) out.set(from, out.get(from)! + txDelta({ ...tx, toAccountId: null }, tx.accountId));
+    if (tx.type === "transfer" && tx.toAccountId) {
+      const to = target(tx.toAccountId);
+      if (out.has(to)) out.set(to, out.get(to)! + (tx.toAmount ?? tx.amount));
     }
   }
+  // La billetera muestra el saldo de su cuenta vinculada.
+  for (const [w, t] of link) out.set(w, out.get(t) ?? 0);
   return out;
+}
+
+/** Id de la cuenta que realmente guarda el dinero (resuelve billeteras vinculadas). */
+export function moneyAccountId(accounts: Account[], id: string): string {
+  return accounts.find((a) => a.id === id)?.linkedAccountId ?? id;
 }
 
 export function goalSaved(goalId: string, contributions: GoalContribution[]): number {
@@ -42,6 +58,10 @@ export function goalSaved(goalId: string, contributions: GoalContribution[]): nu
 export interface Position {
   /** Dinero líquido: bancos, ahorros, wallets y efectivo (en moneda principal). */
   assets: number;
+  /** Parte de lo líquido en cuentas marcadas "para gastar". */
+  spendable: number;
+  /** Deuda de tarjetas marcadas "para gastar" (se descuenta del disponible). */
+  spendableDebt: number;
   /** Inversiones (terreno, cursos, fondos…): valor actual o lo aportado. */
   investments: number;
   /** Lo que otras personas te deben. */
@@ -53,8 +73,8 @@ export interface Position {
   /** Dinero apartado para metas (sobres virtuales). */
   reserved: number;
   /**
-   * "Disponible real": lo que realmente puedes gastar hoy =
-   * líquido − deuda de tarjetas − apartado para metas. Las inversiones y lo que te deben no cuentan.
+   * "Disponible para gastar" = saldo de las cuentas marcadas para gastar − deuda de esas tarjetas
+   * − metas guardadas en esas cuentas. Ahorros, inversiones y lo que te deben no cuentan.
    */
   available: number;
 }
@@ -67,20 +87,44 @@ export function position(
   fx: Fx = { base: "PEN", usdRate: 3.75 },
 ): Position {
   let assets = 0;
+  let spendable = 0;
+  let spendableDebt = 0;
   let investments = 0;
   let receivables = 0;
   let debt = 0;
+  const byId = new Map(accounts.map((a) => [a.id, a]));
   for (const a of accounts) {
-    if (a.deletedAt || a.archived) continue;
+    if (a.deletedAt || a.archived || a.linkedAccountId) continue; // billeteras vinculadas no tienen saldo propio
     const b = toBase(balances.get(a.id) ?? 0, a.currency, fx);
-    if (a.type === "credit_card") debt += Math.max(0, -b);
-    else if (a.type === "investment") investments += a.marketValue != null ? toBase(a.marketValue, a.currency, fx) : b;
+    const forSpending = countsForAvailable(a);
+    if (a.type === "credit_card") {
+      debt += Math.max(0, -b);
+      if (forSpending) spendableDebt += Math.max(0, -b);
+    } else if (a.type === "investment") investments += a.marketValue != null ? toBase(a.marketValue, a.currency, fx) : b;
     else if (a.type === "receivable") receivables += Math.max(0, b);
-    else assets += b;
+    else {
+      assets += b;
+      if (forSpending) spendable += b;
+    }
   }
-  const reserved = goals
-    .filter((g) => !g.deletedAt && !g.archived)
+  const active = goals.filter((g) => !g.deletedAt && !g.archived);
+  const reserved = active.reduce((s, g) => s + Math.max(0, goalSaved(g.id, contributions)), 0);
+  // Solo se descuenta lo apartado en metas cuyo dinero está en una cuenta "para gastar" (o sin cuenta asignada).
+  const reservedInSpendable = active
+    .filter((g) => {
+      const acc = g.accountId ? byId.get(g.accountId) : undefined;
+      return !acc || countsForAvailable(acc);
+    })
     .reduce((s, g) => s + Math.max(0, goalSaved(g.id, contributions)), 0);
-  const liquidNet = assets - debt;
-  return { assets, investments, receivables, debt, netWorth: liquidNet + investments + receivables, reserved, available: liquidNet - reserved };
+  return {
+    assets,
+    spendable,
+    spendableDebt,
+    investments,
+    receivables,
+    debt,
+    netWorth: assets - debt + investments + receivables,
+    reserved,
+    available: spendable - spendableDebt - reservedInSpendable,
+  };
 }

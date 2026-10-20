@@ -62,7 +62,7 @@ export default function MeDeben() {
           const overdue = a.dueDate && a.dueDate < today();
           return (
             <div key={a.id} className="card p-4">
-              <button className="flex w-full items-center gap-3 text-left" onClick={() => setEditing(a)}>
+              <Link href={`/me-deben/detalle/?id=${a.id}`} className="flex w-full items-center gap-3 text-left">
                 <IconBubble icon={a.icon} color={a.color} size={46} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-bold">{a.name}</div>
@@ -73,8 +73,11 @@ export default function MeDeben() {
                     </span>
                   )}
                 </div>
-                <Money value={owed} hidden={hide} currency={a.currency} className="text-lg font-extrabold" />
-              </button>
+                <div className="text-right">
+                  <Money value={owed} hidden={hide} currency={a.currency} className="text-lg font-extrabold" />
+                  <div className="text-[11px] font-semibold text-brand-strong">Ver historial ›</div>
+                </div>
+              </Link>
               <div className="mt-3 flex gap-2">
                 <button className="btn-primary flex-1 py-2.5" onClick={() => openQuickAdd({ type: "transfer", fromAccountId: a.id })}>
                   <HandCoins size={16} /> Me pagó
@@ -82,9 +85,6 @@ export default function MeDeben() {
                 <button className="btn-ghost py-2.5" onClick={() => openQuickAdd({ type: "transfer", toAccountId: a.id })}>
                   Le presté más
                 </button>
-                <Link href={`/movimientos/?account=${a.id}`} className="btn-ghost px-3 py-2.5" aria-label="Historial">
-                  📜
-                </Link>
               </div>
             </div>
           );
@@ -92,14 +92,17 @@ export default function MeDeben() {
       </div>
 
       {settled.length > 0 && (
-        <Section title="Ya pagaron">
+        <Section title="Saldadas y archivadas">
           <div className="card divide-y divide-line/60">
             {settled.map((a) => (
-              <button key={a.id} onClick={() => setEditing(a)} className="flex w-full items-center gap-3 px-4 py-3 text-left opacity-70">
+              <Link key={a.id} href={`/me-deben/detalle/?id=${a.id}`} className="flex w-full items-center gap-3 px-4 py-3 text-left opacity-75">
                 <IconBubble icon={a.icon} color={a.color} size={34} />
-                <span className="flex-1 truncate font-medium">{a.name}</span>
-                <span className="text-xs font-semibold text-pos">✓ Saldado</span>
-              </button>
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {a.name}
+                  {a.note && <span className="text-xs text-muted"> · {a.note}</span>}
+                </span>
+                <span className="text-xs font-semibold text-pos">{a.archived ? "🗄️ Archivada" : "✓ Saldado"}</span>
+              </Link>
             ))}
           </div>
         </Section>

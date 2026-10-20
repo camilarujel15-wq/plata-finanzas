@@ -299,3 +299,7 @@ left join public.transactions t
   on (t.account_id = a.id or t.to_account_id = a.id) and t.deleted_at is null
 where a.deleted_at is null
 group by a.id;
+
+alter table public.accounts
+  add column if not exists include_in_available boolean,
+  add column if not exists linked_account_id uuid references public.accounts (id) on delete set null;

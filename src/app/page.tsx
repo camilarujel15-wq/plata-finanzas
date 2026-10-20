@@ -16,6 +16,7 @@ import { monthTotals, monthlySeries } from "@/lib/domain/reports";
 import { budgetStatus } from "@/lib/domain/budgets";
 import { goalSaved } from "@/lib/domain/balances";
 import { buildInsights } from "@/lib/domain/insights";
+import { countsForAvailable } from "@/lib/domain/types";
 
 export default function Dashboard() {
   const s = useStore();
@@ -79,27 +80,15 @@ export default function Dashboard() {
         </button>
       </header>
 
-      {/* Disponible real */}
+      {/* Disponible para gastar: la única cifra grande. Lo demás vive en Cuentas. */}
       <section className="hero animate-rise p-5 pb-4">
         <div className="flex items-center justify-between">
-          <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-emerald-200 ring-1 ring-white/10">DISPONIBLE REAL</span>
-          <span className="text-[11px] text-white/50">activos − deudas − metas</span>
+          <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-emerald-200 ring-1 ring-white/10">DISPONIBLE PARA GASTAR</span>
+          <Link href="/cuentas/" className="text-[11px] font-medium text-white/50">¿Qué cuenta? ›</Link>
         </div>
-        <Money value={pos.available} hidden={hide} className="mt-3 block text-[40px] font-extrabold leading-none tracking-tight" />
-        <div className="mt-5 grid grid-cols-3 gap-2">
-          {[
-            { label: "Patrimonio", value: pos.netWorth },
-            { label: "Deuda TC", value: pos.debt },
-            { label: "En metas", value: pos.reserved },
-          ].map((x) => (
-            <div key={x.label} className="rounded-2xl bg-white/[0.07] px-3 py-2.5 ring-1 ring-white/[0.08]">
-              <div className="text-[10.5px] font-medium text-white/55">{x.label}</div>
-              <Money value={x.value} hidden={hide} compact className="text-[15px] font-bold" />
-            </div>
-          ))}
-        </div>
+        <Money value={pos.available} hidden={hide} className={`mt-3 block text-[40px] font-extrabold leading-none tracking-tight ${pos.available < 0 ? "text-rose-300" : ""}`} />
         {perDay > 0 && (
-          <div className="mt-3 flex items-center gap-2 rounded-2xl bg-emerald-400/10 px-3 py-2.5 text-[13px] ring-1 ring-emerald-300/20">
+          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-400/10 px-3 py-2.5 text-[13px] ring-1 ring-emerald-300/20">
             <span className="text-lg">🧭</span>
             <span className="text-white/80">
               Hoy puedes gastar <Money value={perDay} hidden={hide} className="font-bold text-emerald-200" />
@@ -107,6 +96,17 @@ export default function Dashboard() {
             </span>
           </div>
         )}
+        <Link href="/cuentas/" className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-white/50">
+          <span>
+            Patrimonio total <Money value={pos.netWorth} hidden={hide} compact className="font-semibold text-white/75" />
+            {pos.spendableDebt > 0 && (
+              <>
+                {" "}· Tarjetas <Money value={-pos.spendableDebt} hidden={hide} compact className="font-semibold text-rose-200/80" />
+              </>
+            )}
+          </span>
+          <span>Ver cuentas ›</span>
+        </Link>
       </section>
 
       {/* Captura por texto/voz desde el inicio */}
@@ -174,9 +174,9 @@ export default function Dashboard() {
         </Section>
       )}
 
-      <Section title="Cuentas" action={<Link href="/cuentas/" className="link">Ver todas</Link>}>
+      <Section title="Cuentas para gastar" action={<Link href="/cuentas/" className="link">Todas</Link>}>
         <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 no-scrollbar">
-          {accounts.map((a) => (
+          {accounts.filter((a) => countsForAvailable(a) && !a.linkedAccountId).map((a) => (
             <Link key={a.id} href={`/movimientos/?account=${a.id}`} className="tap card relative w-[156px] shrink-0 overflow-hidden p-3.5">
               <div className="absolute inset-x-0 top-0 h-1" style={{ background: a.color }} />
               <IconBubble icon={a.icon} color={a.color} size={36} />

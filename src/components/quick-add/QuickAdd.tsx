@@ -60,7 +60,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
   const [date, setDate] = useState(editing?.date ?? today());
   const [note, setNote] = useState(editing?.merchant || editing?.note || "");
   const [tags, setTags] = useState(editing?.tags.join(", ") ?? "");
-  const [details, setDetails] = useState(Boolean(editing));
+  const [details, setDetails] = useState(Boolean(editing) || Boolean(qa.toAccountId) || Boolean(qa.fromAccountId));
   const [text, setText] = useState(qa.text ?? "");
   const [source, setSource] = useState<TxSource>(editing?.source ?? "manual");
   const [showAllCats, setShowAllCats] = useState(false);
@@ -417,7 +417,20 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       </div>
       {details && (
         <div className="mt-3 grid animate-rise gap-2">
-          <input className="input" placeholder="Nota o comercio (ej. Tambo, Uber)" value={note} onChange={(e) => setNote(e.target.value)} />
+          <input
+            className="input"
+            placeholder={
+              toAcc?.type === "receivable" && type === "transfer"
+                ? "Concepto del préstamo (ej. pasajes a Cusco)"
+                : fromAcc?.type === "receivable" && type === "transfer"
+                  ? "Nota (ej. primera cuota)"
+                  : toAcc?.type === "investment" && type === "transfer"
+                    ? "Nota (ej. cuota 13 de 48)"
+                    : "Nota o comercio (ej. Tambo, Uber)"
+            }
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
           <input className="input" placeholder="Etiquetas: viaje, trabajo" value={tags} onChange={(e) => setTags(e.target.value)} />
         </div>
       )}
