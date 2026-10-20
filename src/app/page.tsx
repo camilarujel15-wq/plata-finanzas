@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { ArrowDownLeft, ArrowUpRight, ChevronRight, Eye, EyeOff, Mic, Sparkles } from "lucide-react";
 import { useStore } from "@/lib/store/store";
 import { useUI } from "@/lib/store/ui";
-import { useAccounts, useBalances, usePosition, useTransactions } from "@/lib/store/selectors";
+import { useAccounts, useBalances, useBaseTransactions, usePosition, useSpendableAccounts, useTransactions } from "@/lib/store/selectors";
 import { Money, useFormat } from "@/components/ui/Money";
 import { Empty, IconBubble, Progress, Section } from "@/components/ui/bits";
 import { TxRow } from "@/components/tx/TxRow";
@@ -21,32 +21,34 @@ export default function Dashboard() {
   const s = useStore();
   const hide = !!s.settings.hideAmounts;
   const openQuickAdd = useUI((u) => u.openQuickAdd);
-  const accounts = useAccounts();
+  const allAccounts = useAccounts();
+  const accounts = useSpendableAccounts();
   const balances = useBalances();
   const pos = usePosition();
   const txs = useTransactions();
+  const baseTxs = useBaseTransactions();
   const fmt = useFormat();
   const period = currentPeriod();
 
-  const month = useMemo(() => monthTotals(txs, period), [txs, period]);
-  const series = useMemo(() => monthlySeries(txs, period, 6), [txs, period]);
+  const month = useMemo(() => monthTotals(baseTxs, period), [baseTxs, period]);
+  const series = useMemo(() => monthlySeries(baseTxs, period, 6), [baseTxs, period]);
   const catMap = useMemo(() => new Map(s.categories.map((c) => [c.id, c])), [s.categories]);
   const accMap = useMemo(() => new Map(s.accounts.map((a) => [a.id, a])), [s.accounts]);
   const budgets = useMemo(
     () =>
       s.budgets
         .filter((b) => !b.deletedAt)
-        .map((b) => budgetStatus(b, txs, period))
+        .map((b) => budgetStatus(b, baseTxs, period))
         .sort((a, b) => b.ratio - a.ratio),
-    [s.budgets, txs, period],
+    [s.budgets, baseTxs, period],
   );
   const insights = useMemo(
-    () => buildInsights({ transactions: txs, categories: s.categories, budgets: s.budgets, goals: s.goals, contributions: s.contributions, fmt }),
-    [txs, s.categories, s.budgets, s.goals, s.contributions, fmt],
+    () => buildInsights({ transactions: baseTxs, categories: s.categories, budgets: s.budgets, goals: s.goals, contributions: s.contributions, fmt }),
+    [baseTxs, s.categories, s.budgets, s.goals, s.contributions, fmt],
   );
   const goals = s.goals.filter((g) => !g.deletedAt && !g.archived);
 
-  if (!accounts.length) return <Onboarding />;
+  if (!allAccounts.length) return <Onboarding />;
 
   // Ritmo diario sugerido: presupuesto restante (o ingreso neto) repartido en los días que faltan.
   const day = Number(today().slice(8, 10));
@@ -179,7 +181,7 @@ export default function Dashboard() {
               <div className="absolute inset-x-0 top-0 h-1" style={{ background: a.color }} />
               <IconBubble icon={a.icon} color={a.color} size={36} />
               <div className="mt-3 truncate text-[13px] font-medium text-muted">{a.name}</div>
-              <Money value={balances.get(a.id) ?? 0} hidden={hide} className={`block text-[17px] font-bold ${(balances.get(a.id) ?? 0) < 0 ? "text-neg" : ""}`} />
+              <Money value={balances.get(a.id) ?? 0} hidden={hide} currency={a.currency} className={`block text-[17px] font-bold ${(balances.get(a.id) ?? 0) < 0 ? "text-neg" : ""}`} />
               {a.type === "credit_card" && a.creditLimit ? (
                 <Progress className="mt-2 h-1.5" value={Math.max(0, -(balances.get(a.id) ?? 0)) / a.creditLimit} />
               ) : null}
@@ -187,6 +189,21 @@ export default function Dashboard() {
           ))}
         </div>
       </Section>
+
+      {(pos.investments > 0 || pos.receivables > 0 || allAccounts.some((a) => a.type === "investment" || a.type === "receivable")) && (
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Link href="/inversiones/" className="tap card p-4">
+            <IconBubble icon="📈" color="#6366f1" size={38} />
+            <div className="mt-3 text-xs font-medium text-muted">Inversiones</div>
+            <Money value={pos.investments} hidden={hide} compact className="text-[17px] font-bold" />
+          </Link>
+          <Link href="/me-deben/" className="tap card p-4">
+            <IconBubble icon="🤝" color="#f59e0b" size={38} />
+            <div className="mt-3 text-xs font-medium text-muted">Me deben</div>
+            <Money value={pos.receivables} hidden={hide} compact className="text-[17px] font-bold" />
+          </Link>
+        </div>
+      )}
 
       <Section title="Evolución" action={<Link href="/reportes/" className="link">Reportes</Link>}>
         <div className="card p-4">

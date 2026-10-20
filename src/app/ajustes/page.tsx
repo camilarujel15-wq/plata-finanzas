@@ -13,6 +13,8 @@ import { CloudLogin } from "@/components/cloud/CloudLogin";
 import { useCategoriesByFrequency } from "@/lib/store/selectors";
 import { isNative } from "@/lib/native/platform";
 import { requestPinWidget } from "@/lib/native/widget";
+import { SecuritySection } from "@/components/security/SecuritySection";
+import { CurrencySection } from "@/components/settings/CurrencySection";
 import { syncNow } from "@/lib/sync/engine";
 
 function download(name: string, content: string, type: string) {
@@ -74,10 +76,6 @@ export default function Ajustes() {
             <label className="label" htmlFor="nm">Nombre</label>
             <input id="nm" className="input" value={s.settings.displayName} onChange={(e) => s.setSettings({ displayName: e.target.value })} />
           </div>
-          <div>
-            <div className="label">Moneda principal</div>
-            <Segmented value={s.settings.currency} onChange={(currency) => s.setSettings({ currency })} options={[{ value: "PEN", label: "Soles (S/)" }, { value: "USD", label: "Dólares ($)" }]} />
-          </div>
           <div className="flex items-center justify-between gap-3 text-sm">
             <span>
               Ocultar montos
@@ -95,6 +93,8 @@ export default function Ajustes() {
         </div>
       </Section>
 
+      <SecuritySection />
+      <CurrencySection />
       <CloudSection />
       <WidgetSection />
 

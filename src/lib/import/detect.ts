@@ -191,7 +191,7 @@ const INCOME_TYPE = ["ingreso", "income", "abono", "entrada", "deposito"];
 export function buildRows(
   rows: string[][],
   map: ColumnMap,
-  ctx: { categories: Category[]; rules: CategoryRule[]; existing: Transaction[] },
+  ctx: { categories: Category[]; rules: CategoryRule[]; existing: Transaction[]; forceType?: "expense" | "income" | null },
 ): { rows: ImportRow[]; skipped: number } {
   const known = new Set(ctx.existing.filter((t) => !t.deletedAt && t.importHash).map((t) => t.importHash!));
   const loose = new Set(ctx.existing.filter((t) => !t.deletedAt).map((t) => `${t.date}|${t.amount}|${t.type}`));
@@ -217,6 +217,8 @@ export function buildRows(
     let type: TxType = signed < 0 ? "expense" : "income";
     if (typeCell) type = INCOME_TYPE.some((w) => typeCell.includes(w)) ? "income" : typeCell.includes("transfer") ? "transfer" : "expense";
     if (type === "transfer") type = signed < 0 ? "expense" : "income"; // las transferencias se revisan manualmente
+    // Bases de Notion separadas (una de gastos y otra de ingresos) traen montos positivos sin columna "Tipo".
+    if (ctx.forceType) type = ctx.forceType;
     const amount = Math.abs(signed);
     const description = get(map.description) || "(sin descripción)";
 

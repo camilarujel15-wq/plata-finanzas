@@ -212,7 +212,9 @@ public class QuickEntryActivity extends Activity {
     private void refresh() {
         if (amountView == null) return;
         String shown = digits.length() == 0 ? "0" : digits.toString();
-        amountView.setText("S/ " + shown);
+        JSONObject acc = findById(snap.optJSONArray("accounts"), accountId);
+        String cur = acc != null ? acc.optString("currency", "PEN") : "PEN";
+        amountView.setText(("USD".equals(cur) ? "US$ " : "S/ ") + shown);
         amountView.setTextColor("income".equals(type) ? cPos : cInk);
         boolean expense = "expense".equals(type);
         styleSegment(typeExpense, expense);
@@ -314,11 +316,17 @@ public class QuickEntryActivity extends Activity {
             Toast.makeText(this, "No se pudo guardar", Toast.LENGTH_SHORT).show();
             return;
         }
-        WidgetStore.adjustAvailable(this, "income".equals(type) ? cents : -cents);
+        JSONObject used = findById(snap.optJSONArray("accounts"), accountId);
+        String base = snap.optString("currency", "PEN");
+        String accCur = used != null ? used.optString("currency", base) : base;
+        double rate = snap.optDouble("usdRate", 3.75);
+        long baseCents = accCur.equals(base) ? cents : ("PEN".equals(base) ? Math.round(cents * rate) : Math.round(cents / rate));
+        WidgetStore.adjustAvailable(this, "income".equals(type) ? baseCents : -baseCents);
         PlataWidgetProvider.updateAll(this);
         vibrate();
         JSONObject cat = findById(snap.optJSONArray("expense".equals(type) ? "categories" : "incomeCategories"), categoryId);
-        String what = ("income".equals(type) ? "Ingreso " : "Gasto ") + WidgetStore.formatMoney(cents, snap.optString("currency", "PEN"));
+        JSONObject acc = findById(snap.optJSONArray("accounts"), accountId);
+        String what = ("income".equals(type) ? "Ingreso " : "Gasto ") + WidgetStore.formatMoney(cents, acc != null ? acc.optString("currency", "PEN") : "PEN");
         Toast.makeText(this, "✓ " + what + (cat != null ? " · " + cat.optString("name") : ""), Toast.LENGTH_SHORT).show();
         finish();
     }

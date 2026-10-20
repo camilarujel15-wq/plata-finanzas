@@ -61,3 +61,26 @@ sequenceDiagram
 - Cada push a `main` ejecuta **GitHub Actions** (`.github/workflows/android.yml`): tests → build web → `cap sync` → `gradlew assembleRelease` → publica **Plata.apk** en *Releases*.
 - La firma (`android/app/plata-personal.keystore`) es fija para que cada versión se instale **encima** de la anterior sin perder datos. Es solo para uso personal fuera de Play Store; para publicar en Google Play hay que generar una clave privada y guardarla como secreto.
 - Compilar en tu computadora (opcional): Android Studio + `npm run cap:sync` + `npm run android:open`.
+
+## 6.5 Monedas, inversiones y "me deben" (v1.1)
+- **Monedas:** cada cuenta tiene su moneda (soles o dólares) y su saldo se guarda en esa moneda. El disponible, el patrimonio, los reportes y los presupuestos convierten todo a la **moneda principal** con el tipo de cambio de *Ajustes → Monedas*, que puedes escribir a mano o actualizar desde open.er-api.com. Las transferencias entre monedas guardan cuánto salió y cuánto llegó (`to_amount`), así cuadran con el tipo de cambio real del banco.
+- **Inversiones** (`type = investment`): terreno en cuotas, cursos, fondos, negocio. Cada cuota es una transferencia desde una cuenta. Opcionalmente guardan el *costo total*, para mostrar el % pagado, y el *valor actual*. Suman al patrimonio, no al disponible.
+- **Me deben** (`type = receivable`): una "cuenta" por persona. *Le presté* = transferencia de tu cuenta hacia esa persona; *Me pagó* = transferencia de vuelta. Si pagaste su parte con tarjeta, registras la deuda sin movimiento de dinero. Suma al patrimonio, no al disponible.
+- Migración para proyectos existentes: `supabase/migrations/0004_monedas_inversiones_deudas.sql`. Se puede ejecutar más de una vez sin problema.
+
+## 6.6 Bloqueo de la app
+- PIN de 4 o 6 dígitos guardado como hash PBKDF2-SHA256 (120 000 iteraciones, con sal); el PIN nunca se guarda en claro.
+- Huella o rostro con el sistema de Android (`@aparajita/capacitor-biometric-auth`); el PIN queda como respaldo.
+- Se vuelve a pedir tras salir de la app: siempre, después de 1 minuto o de 5 minutos. Tras 5 intentos fallidos espera 30 s.
+- Con el bloqueo activo, el widget oculta el saldo, pero se puede seguir registrando gastos desde él.
+- ¿Olvidaste el PIN? Si tienes respaldo en la nube, tu contraseña de la cuenta quita el bloqueo.
+
+## 6.7 ¿Usa inteligencia artificial?
+No usa modelos de IA de pago ni envía tus datos a ninguno:
+- **Categorización automática:** reglas locales (un diccionario peruano más lo que aprende de tus correcciones). Funciona en el celular, sin internet y sin costo.
+- **Dictado por voz:** es el reconocimiento de voz de Google que trae Android. Es gratis y no consume nada de tu cuenta.
+
+Si en el futuro se agrega IA (por ejemplo leer fotos de boletas), el costo lo pagaría quien ponga la clave de la API, en una Edge Function de Supabase. Ver `supabase/functions/parse-receipt`.
+
+## 6.8 Compartir la app con otras personas
+Cada persona instala el mismo `Plata.apk` y crea **su propia cuenta** de respaldo con su correo. Las reglas RLS de la base de datos hacen que cada quien vea solo sus datos, aunque todos usen el mismo proyecto de Supabase. El plan gratuito de Supabase alcanza de sobra para un grupo pequeño.

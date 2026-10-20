@@ -1,12 +1,12 @@
--- Plata · instalación completa en Supabase (copiar todo y ejecutar una sola vez en SQL Editor)
+-- Plata · instalación completa en Supabase (proyecto nuevo: copiar todo y ejecutar una sola vez en SQL Editor)
 
 
 create extension if not exists "pgcrypto";
 
 -- ───────────────────────── Tipos ─────────────────────────
-create type account_type   as enum ('checking', 'savings', 'credit_card', 'wallet', 'cash');
+create type account_type   as enum ('checking', 'savings', 'credit_card', 'wallet', 'cash', 'investment', 'receivable');
 create type tx_type        as enum ('expense', 'income', 'transfer');
-create type transfer_kind  as enum ('internal', 'card_payment', 'savings');
+create type transfer_kind  as enum ('internal', 'card_payment', 'savings', 'investment', 'loan', 'repayment');
 create type category_kind  as enum ('expense', 'income');
 create type tx_source      as enum ('manual', 'text', 'voice', 'import', 'ocr', 'widget');
 
@@ -270,3 +270,32 @@ create trigger budget_same_owner  before insert or update on public.budgets     
 create trigger rule_same_owner    before insert or update on public.category_rules     for each row execute function public.assert_same_owner();
 create trigger contrib_same_owner before insert or update on public.goal_contributions for each row execute function public.assert_same_owner();
 create trigger alert_same_owner   before insert or update on public.budget_alerts      for each row execute function public.assert_same_owner();
+
+
+alter table public.accounts
+  add column if not exists investment_kind text check (investment_kind is null or investment_kind in ('property', 'education', 'funds', 'business', 'other')),
+  add column if not exists target_amount bigint check (target_amount is null or target_amount >= 0),
+  add column if not exists market_value bigint,
+  add column if not exists due_date date,
+  add column if not exists note text check (note is null or char_length(note) <= 300);
+
+-- Transferencias entre monedas: monto que llega a la cuenta destino.
+alter table public.transactions
+  add column if not exists to_amount bigint check (to_amount is null or to_amount > 0);
+
+-- Saldos: en transferencias entre monedas, la cuenta destino recibe to_amount.
+create or replace view public.account_balances with (security_invoker = true) as
+select a.id as account_id,
+       a.user_id,
+       a.initial_balance
+       + coalesce(sum(case
+           when t.type = 'income'   and t.account_id = a.id    then  t.amount
+           when t.type = 'expense'  and t.account_id = a.id    then -t.amount
+           when t.type = 'transfer' and t.account_id = a.id    then -t.amount
+           when t.type = 'transfer' and t.to_account_id = a.id then  coalesce(t.to_amount, t.amount)
+         end), 0) as balance
+from public.accounts a
+left join public.transactions t
+  on (t.account_id = a.id or t.to_account_id = a.id) and t.deleted_at is null
+where a.deleted_at is null
+group by a.id;

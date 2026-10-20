@@ -3,6 +3,8 @@
 import { useMemo } from "react";
 import { useStore } from "./store";
 import { accountBalances, position } from "../domain/balances";
+import { DEFAULT_USD_RATE, normalizeTransactions, type Fx } from "../domain/fx";
+import { isSpendable } from "../domain/types";
 import type { Category } from "../domain/types";
 
 export function useAccounts(includeArchived = false) {
@@ -44,12 +46,33 @@ export function useBalances() {
   return useMemo(() => accountBalances(accounts, txs), [accounts, txs]);
 }
 
+export function useFx(): Fx {
+  const base = useStore((s) => s.settings.currency);
+  const usdRate = useStore((s) => s.settings.usdRate ?? DEFAULT_USD_RATE);
+  return useMemo(() => ({ base, usdRate }), [base, usdRate]);
+}
+
 export function usePosition() {
   const accounts = useStore((s) => s.accounts);
   const goals = useStore((s) => s.goals);
   const contributions = useStore((s) => s.contributions);
   const balances = useBalances();
-  return useMemo(() => position(accounts, balances, goals, contributions), [accounts, balances, goals, contributions]);
+  const fx = useFx();
+  return useMemo(() => position(accounts, balances, goals, contributions, fx), [accounts, balances, goals, contributions, fx]);
+}
+
+/** Movimientos con montos convertidos a la moneda principal (para totales, reportes y presupuestos). */
+export function useBaseTransactions() {
+  const txs = useTransactions();
+  const accounts = useStore((s) => s.accounts);
+  const fx = useFx();
+  return useMemo(() => normalizeTransactions(txs, accounts, fx), [txs, accounts, fx]);
+}
+
+/** Cuentas donde entra y sale dinero (excluye inversiones y "me deben"). */
+export function useSpendableAccounts() {
+  const accounts = useAccounts();
+  return useMemo(() => accounts.filter((a) => isSpendable(a.type)), [accounts]);
 }
 
 /**

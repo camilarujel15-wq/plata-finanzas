@@ -30,7 +30,7 @@ export function fromRow<T extends Syncable>(row: Record<string, unknown>): T {
   for (const [k, v] of Object.entries(row)) {
     if (k === "user_id") continue;
     // numeric/bigint de Postgres pueden llegar como string.
-    out[camel(k)] = typeof v === "string" && /^(amount|initial_balance|target_amount|credit_limit)$/.test(k) ? Number(v) : v;
+    out[camel(k)] = typeof v === "string" && /^(amount|initial_balance|target_amount|credit_limit|market_value|to_amount)$/.test(k) ? Number(v) : v;
   }
   return out as T;
 }

@@ -47,6 +47,7 @@ export function TxRow({
         value={tx.type === "expense" ? -tx.amount : tx.amount}
         sign={tx.type === "income"}
         hidden={hidden}
+        currency={acc?.currency}
         className={`text-[15px] font-bold ${tx.type === "income" ? "text-pos" : isTransfer ? "text-muted" : ""}`}
       />
     </button>

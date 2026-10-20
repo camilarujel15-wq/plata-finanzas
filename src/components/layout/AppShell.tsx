@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { BottomNav } from "./BottomNav";
 import { Toaster } from "./Toaster";
@@ -12,6 +12,7 @@ import { getSupabase } from "@/lib/sync/supabase";
 import { isNative, syncStatusBar } from "@/lib/native/platform";
 import { startWidgetBridge } from "@/lib/native/widget";
 import { listenDeepLinks } from "@/lib/native/deeplinks";
+import { LockScreen } from "@/components/security/LockScreen";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const hydrated = useStore((s) => s.hydrated);
@@ -20,6 +21,24 @@ export function AppShell({ children }: { children: ReactNode }) {
   const params = useSearchParams();
   const openQuickAdd = useUI((s) => s.openQuickAdd);
   const toast = useUI((s) => s.toast);
+  const lockCfg = useStore((s) => s.settings.lock);
+  const [locked, setLocked] = useState<boolean | null>(null);
+  const hiddenAt = useRef<number | null>(null);
+
+  // Bloqueo: al abrir y al volver a la app tras el tiempo de gracia.
+  useEffect(() => {
+    if (!hydrated) return;
+    setLocked((l) => (l === null ? !!useStore.getState().settings.lock : l));
+  }, [hydrated]);
+  useEffect(() => {
+    const onVis = () => {
+      const cfg = useStore.getState().settings.lock;
+      if (document.visibilityState === "hidden") hiddenAt.current = Date.now();
+      else if (cfg && hiddenAt.current && Date.now() - hiddenAt.current >= cfg.graceSeconds * 1000) setLocked(true);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
 
   // Web: service worker (PWA). En la app nativa los archivos ya vienen empaquetados.
   useEffect(() => {
@@ -74,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => clearTimeout(t);
   }, [hydrated, outbox]);
 
-  if (!hydrated) {
+  if (!hydrated || locked === null) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-[#0b1220]">
         <div className="h-12 w-12 animate-pulse rounded-[18px] bg-gradient-to-br from-emerald-300 to-emerald-600" />
@@ -82,9 +101,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
+  if (locked && lockCfg) return <LockScreen onUnlock={() => setLocked(false)} />;
+
   return (
     <>
-      <main className="mx-auto min-h-dvh max-w-lg px-5 pb-40">{children}</main>
+      <main className="mx-auto min-h-dvh max-w-lg overflow-x-clip px-5 pb-40">{children}</main>
       {hasAccounts && <BottomNav />}
       <QuickAdd />
       <Toaster />

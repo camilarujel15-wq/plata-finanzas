@@ -5,6 +5,8 @@ import { App } from "@capacitor/app";
 import type { State } from "../store/store";
 import { useStore } from "../store/store";
 import { accountBalances, position } from "../domain/balances";
+import { DEFAULT_USD_RATE } from "../domain/fx";
+import { isSpendable } from "../domain/types";
 import { isNative } from "./platform";
 
 interface PendingItem {
@@ -40,17 +42,20 @@ function byFrequency(s: State, kind: "expense" | "income") {
 
 /** Lo que el widget muestra. Se recalcula cada vez que cambian los datos. */
 function buildSnapshot(s: State) {
-  const accounts = s.accounts.filter((a) => !a.deletedAt && !a.archived).sort((a, b) => a.sortOrder - b.sortOrder);
-  const pos = position(s.accounts, accountBalances(s.accounts, s.transactions), s.goals, s.contributions);
+  const accounts = s.accounts.filter((a) => !a.deletedAt && !a.archived && isSpendable(a.type)).sort((a, b) => a.sortOrder - b.sortOrder);
+  const fx = { base: s.settings.currency, usdRate: s.settings.usdRate ?? DEFAULT_USD_RATE };
+  const pos = position(s.accounts, accountBalances(s.accounts, s.transactions), s.goals, s.contributions, fx);
   const expense = byFrequency(s, "expense");
   const favorites = s.settings.widgetFavorites?.length
     ? s.settings.widgetFavorites.map((id) => expense.find((c) => c.id === id)).filter(Boolean)
     : expense.slice(0, 4);
   return {
     currency: s.settings.currency,
+    usdRate: fx.usdRate,
     available: pos.available,
-    hide: !!s.settings.hideAmounts,
-    accounts: accounts.map((a) => ({ id: a.id, name: a.name, icon: a.icon })),
+    // Con bloqueo activo el widget nunca muestra el saldo.
+    hide: !!s.settings.hideAmounts || !!s.settings.lock,
+    accounts: accounts.map((a) => ({ id: a.id, name: a.name, icon: a.icon, currency: a.currency })),
     defaultAccountId: s.settings.defaultAccountId ?? null,
     lastAccountId: s.settings.lastAccountId ?? null,
     favorites: favorites.slice(0, 4),

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useStore } from "@/lib/store/store";
-import { useCategories, useTransactions } from "@/lib/store/selectors";
+import { useBaseTransactions, useCategories } from "@/lib/store/selectors";
 import { Empty, IconBubble, PageHeader, Progress } from "@/components/ui/bits";
 import { Money } from "@/components/ui/Money";
 import { MoneyInput } from "@/components/ui/MoneyInput";
@@ -13,7 +13,7 @@ import { budgetStatus, spentInCategory } from "@/lib/domain/budgets";
 
 export default function Presupuestos() {
   const s = useStore();
-  const txs = useTransactions();
+  const txs = useBaseTransactions();
   const cats = useCategories("expense");
   const period = currentPeriod();
   const [editing, setEditing] = useState<string | null>(null);
@@ -94,7 +94,7 @@ export default function Presupuestos() {
 function BudgetSheet({ categoryId, onClose }: { categoryId: string; onClose: () => void }) {
   const s = useStore();
   const cats = useCategories("expense");
-  const txs = useTransactions();
+  const txs = useBaseTransactions();
   const existing = s.budgets.find((b) => !b.deletedAt && b.categoryId === categoryId);
   const [cat, setCat] = useState(categoryId || cats[0]?.id);
   const [amount, setAmount] = useState<number | null>(existing?.amount ?? null);

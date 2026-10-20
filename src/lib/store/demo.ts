@@ -11,15 +11,20 @@ export function buildDemoData(): FinanceData {
   const categories = seedCategories();
   const cat = (key: string) => categories.find((c) => c.key === key)!.id;
 
-  const acc = (name: string, type: Account["type"], initialBalance: number, icon: string, color: string, i: number, creditLimit: number | null = null): Account => ({
-    ...base, id: uid(), name, type, initialBalance, icon, color, currency: "PEN", archived: false, sortOrder: i, creditLimit,
+  const acc = (name: string, type: Account["type"], initialBalance: number, icon: string, color: string, i: number, creditLimit: number | null = null, extra: Partial<Account> = {}): Account => ({
+    ...base, id: uid(), name, type, initialBalance, icon, color, currency: "PEN", archived: false, sortOrder: i, creditLimit, ...extra,
   });
   const bcp = acc("BCP Sueldo", "checking", 180000, "🏦", "#2563eb", 0);
   const aho = acc("Ahorros", "savings", 450000, "🐷", "#db2777", 1);
   const yape = acc("Yape", "wallet", 12000, "📱", "#7c3aed", 2);
   const cash = acc("Efectivo", "cash", 8000, "💵", "#16a34a", 3);
   const visa = acc("Visa Interbank", "credit_card", -65000, "💳", "#0f172a", 4, 800000);
-  const accounts = [bcp, aho, yape, cash, visa];
+  const usd = acc("Ahorros dólares", "savings", 120000, "💵", "#0891b2", 5, null, { currency: "USD" });
+  const terreno = acc("Terreno Lurín", "investment", 600000, "🏡", "#6366f1", 6, null, { investmentKind: "property", targetAmount: 4500000, note: "Lote 14 · cuota mensual" });
+  const curso = acc("Diplomado Data", "investment", 0, "🎓", "#8b5cf6", 7, null, { investmentKind: "education", targetAmount: 320000 });
+  const juan = acc("Juan", "receivable", 15000, "👤", "#f59e0b", 8, null, { note: "Mitad de la cena de cumpleaños", dueDate: addDays(today(), 10) });
+  const lucia = acc("Lucía", "receivable", 0, "👩", "#ec4899", 9, null, { note: "Préstamo para pasajes", dueDate: addDays(today(), -5) });
+  const accounts = [bcp, aho, yape, cash, visa, usd, terreno, curso, juan, lucia];
 
   // PRNG determinista para que la demo sea estable.
   let seed = 42;
@@ -60,6 +65,8 @@ export function buildDemoData(): FinanceData {
       if (rnd() > 0.5) add({ type: "income", amount: 80000 + Math.round(rnd() * 60000), accountId: bcp.id, categoryId: cat("freelance"), date, merchant: "Proyecto freelance" });
     }
     if (dom === 20) add({ type: "transfer", amount: 10000, accountId: bcp.id, toAccountId: yape.id, transferKind: "internal", date, note: "Recarga Yape" });
+    if (dom === 3) add({ type: "transfer", amount: 75000, accountId: bcp.id, toAccountId: terreno.id, transferKind: "investment", date, note: "Cuota terreno" });
+    if (dom === 8 && d > 60) add({ type: "transfer", amount: 40000, accountId: bcp.id, toAccountId: curso.id, transferKind: "investment", date, note: "Cuota diplomado" });
     const n = Math.floor(rnd() * 3);
     for (let i = 0; i < n; i++) {
       const [key, merchant, min, max, accs] = pick(daily);
@@ -67,6 +74,9 @@ export function buildDemoData(): FinanceData {
     }
     if (dom % 9 === 0) add({ type: "expense", amount: 4500, accountId: yape.id, categoryId: cat("pets"), date, merchant: "Croquetas Max" });
   }
+
+  add({ type: "transfer", amount: 30000, accountId: yape.id, toAccountId: lucia.id, transferKind: "loan", date: addDays(today(), -20), note: "Préstamo a Lucía" });
+  add({ type: "transfer", amount: 10000, accountId: lucia.id, toAccountId: yape.id, transferKind: "repayment", date: addDays(today(), -6), note: "Abono Lucía" });
 
   const budgets: Budget[] = [
     { ...base, id: uid(), categoryId: cat("food"), amount: 90000, thresholds: [50, 80, 100] },

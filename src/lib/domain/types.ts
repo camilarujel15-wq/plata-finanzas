@@ -9,9 +9,12 @@ export type ISODate = string;
 /** Periodo mensual YYYY-MM. */
 export type Period = string;
 
-export type AccountType = "checking" | "savings" | "credit_card" | "wallet" | "cash";
+export type AccountType = "checking" | "savings" | "credit_card" | "wallet" | "cash" | "investment" | "receivable";
+/** Monedas soportadas. Cada cuenta tiene la suya; los totales se convierten a la moneda principal. */
+export type Currency = "PEN" | "USD";
+export type InvestmentKind = "property" | "education" | "funds" | "business" | "other";
 export type TxType = "expense" | "income" | "transfer";
-export type TransferKind = "internal" | "card_payment" | "savings";
+export type TransferKind = "internal" | "card_payment" | "savings" | "investment" | "loan" | "repayment";
 export type CategoryKind = "expense" | "income";
 export type TxSource = "manual" | "text" | "voice" | "import" | "ocr" | "widget";
 
@@ -34,6 +37,16 @@ export interface Account extends Syncable {
   creditLimit?: number | null;
   archived: boolean;
   sortOrder: number;
+  /** Inversiones: tipo (terreno, educación…). */
+  investmentKind?: InvestmentKind | null;
+  /** Inversiones: costo total a pagar (p. ej. precio del terreno) para mostrar % pagado. */
+  targetAmount?: number | null;
+  /** Inversiones: valor actual estimado (si se omite, se usa lo aportado). */
+  marketValue?: number | null;
+  /** Por cobrar: fecha en que prometieron pagar. */
+  dueDate?: ISODate | null;
+  /** Nota libre (concepto de la deuda, número de lote, etc.). */
+  note?: string | null;
 }
 
 export interface Category extends Syncable {
@@ -56,6 +69,8 @@ export interface Transaction extends Syncable {
   /** Solo transferencias. */
   toAccountId?: ID | null;
   transferKind?: TransferKind | null;
+  /** Transferencias entre monedas: monto recibido en la moneda de la cuenta destino. */
+  toAmount?: number | null;
   /** Nulo en transferencias. */
   categoryId?: ID | null;
   date: ISODate;
@@ -117,6 +132,11 @@ export interface Settings {
   onboarded: boolean;
   /** Oculta montos en pantalla (modo privacidad en lugares públicos). */
   hideAmounts?: boolean;
+  /** Soles por 1 dólar (p. ej. 3.75). */
+  usdRate?: number;
+  usdRateUpdatedAt?: string | null;
+  /** Bloqueo de la app con PIN (hash) y biometría. */
+  lock?: { pinHash: string; salt: string; pinLength: number; biometric: boolean; graceSeconds: number } | null;
   /** Categorías fijadas en el widget (si no, las 4 más usadas). */
   widgetFavorites?: string[];
 }
@@ -127,10 +147,28 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   credit_card: "Tarjeta de crédito",
   wallet: "Wallet digital",
   cash: "Efectivo",
+  investment: "Inversión",
+  receivable: "Me deben",
 };
+
+export const INVESTMENT_KIND_LABEL: Record<InvestmentKind, { label: string; icon: string }> = {
+  property: { label: "Terreno / inmueble", icon: "🏡" },
+  education: { label: "Educación / cursos", icon: "🎓" },
+  funds: { label: "Fondos / acciones", icon: "📈" },
+  business: { label: "Negocio", icon: "🏪" },
+  other: { label: "Otra", icon: "💎" },
+};
+
+export const CURRENCY_LABEL: Record<Currency, string> = { PEN: "Soles (S/)", USD: "Dólares (US$)" };
+
+/** Cuentas de dinero disponible: aparecen en el registro rápido y el widget. */
+export const isSpendable = (t: AccountType) => t !== "investment" && t !== "receivable";
 
 export const TRANSFER_KIND_LABEL: Record<TransferKind, string> = {
   internal: "Movimiento interno",
   card_payment: "Pago de tarjeta",
   savings: "A ahorros",
+  investment: "Aporte a inversión",
+  loan: "Préstamo",
+  repayment: "Cobro de deuda",
 };

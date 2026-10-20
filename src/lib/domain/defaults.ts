@@ -66,6 +66,8 @@ export const ACCOUNT_TYPE_ICON: Record<AccountType, string> = {
   credit_card: "💳",
   wallet: "📱",
   cash: "💵",
+  investment: "📈",
+  receivable: "🤝",
 };
 
 export const PALETTE = [
@@ -77,4 +79,5 @@ export const EMOJIS = [
   "🏦", "🐷", "💳", "📱", "💵", "💰", "🪙", "💼", "🏠", "🚗",
   "✈️", "🎓", "🎁", "💍", "🏖️", "📈", "🛡️", "🎮", "🐾", "❤️",
   "🍽️", "☕", "🛒", "⛽", "🎬", "💡", "📚", "👶", "🏋️", "🧾",
+  "🏡", "🤝", "👤", "👩", "👨", "👵", "🧑‍💼", "💵", "💶", "🇺🇸",
 ];

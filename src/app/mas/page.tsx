@@ -8,6 +8,8 @@ import { isCloudEnabled } from "@/lib/sync/supabase";
 
 const items = [
   { href: "/cuentas/", icon: "🏦", color: "#2563eb", title: "Cuentas", body: "Bancos, ahorros, tarjetas, wallets y efectivo" },
+  { href: "/inversiones/", icon: "📈", color: "#6366f1", title: "Inversiones", body: "Terreno en cuotas, cursos, fondos, negocio" },
+  { href: "/me-deben/", icon: "🤝", color: "#f59e0b", title: "Me deben", body: "Quién te debe, cuánto y cuándo paga" },
   { href: "/metas/", icon: "🎯", color: "#f97316", title: "Metas de ahorro", body: "Objetivos, fechas y aportes" },
   { href: "/presupuestos/", icon: "📊", color: "#8b5cf6", title: "Presupuestos", body: "Límites mensuales con alertas 50/80/100%" },
   { href: "/categorias/", icon: "🏷️", color: "#ec4899", title: "Categorías y reglas", body: "Personaliza y revisa lo que la app aprendió" },

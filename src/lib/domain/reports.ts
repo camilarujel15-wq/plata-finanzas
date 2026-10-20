@@ -1,5 +1,6 @@
 import type { Account, Category, Period, Transaction } from "./types";
 import { accountBalances } from "./balances";
+import { toBase, type Fx } from "./fx";
 import { daysInPeriod, endOfPeriod, lastPeriods, periodOf } from "./dates";
 
 export interface MonthTotals {
@@ -98,14 +99,14 @@ export function dailyCashflow(transactions: Transaction[], period: Period) {
 }
 
 /** Patrimonio neto al cierre de cada mes. */
-export function netWorthSeries(accounts: Account[], transactions: Transaction[], end: Period, months: number) {
+export function netWorthSeries(accounts: Account[], transactions: Transaction[], end: Period, months: number, fx: Fx = { base: "PEN", usdRate: 3.75 }) {
   const active = accounts.filter((a) => !a.deletedAt);
   return lastPeriods(end, months).map((p) => {
     const b = accountBalances(active, transactions, endOfPeriod(p));
     let assets = 0;
     let debt = 0;
     for (const a of active) {
-      const v = b.get(a.id) ?? 0;
+      const v = toBase(b.get(a.id) ?? 0, a.currency, fx);
       if (a.type === "credit_card") debt += Math.max(0, -v);
       else assets += v;
     }

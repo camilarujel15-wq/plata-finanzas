@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import Papa from "papaparse";
 import { Check, FileUp, Wand2 } from "lucide-react";
 import { useStore } from "@/lib/store/store";
-import { useAccounts, useCategories } from "@/lib/store/selectors";
+import { useSpendableAccounts as useAccounts, useCategories } from "@/lib/store/selectors";
 import { useUI } from "@/lib/store/ui";
-import { PageHeader } from "@/components/ui/bits";
+import { PageHeader, Segmented } from "@/components/ui/bits";
 import { Money } from "@/components/ui/Money";
 import { buildRows, COLUMN_LABEL, detectColumns, findHeaderRow, type ColumnMap, type ImportRow } from "@/lib/import/detect";
 import { normalize } from "@/lib/domain/text";
@@ -40,6 +40,7 @@ export default function Importar() {
   const [skipped, setSkipped] = useState(0);
   const [accountId, setAccountId] = useState(s.settings.defaultAccountId ?? accounts[0]?.id ?? "");
   const [error, setError] = useState("");
+  const [forceType, setForceType] = useState<"auto" | "expense" | "income">("auto");
 
   const header = raw[headerRow] ?? [];
   const body = useMemo(() => raw.slice(headerRow + 1), [raw, headerRow]);
@@ -62,7 +63,7 @@ export default function Importar() {
 
   const toPreview = () => {
     if (!map) return;
-    const out = buildRows(body, map, { categories: s.categories, rules: s.rules, existing: s.transactions });
+    const out = buildRows(body, map, { categories: s.categories, rules: s.rules, existing: s.transactions, forceType: forceType === "auto" ? null : forceType });
     setRows(out.rows);
     setSkipped(out.skipped);
     setStep(3);
@@ -156,10 +157,23 @@ export default function Importar() {
             </div>
           </div>
           <div>
+            <div className="label">¿Qué contiene el archivo?</div>
+            <Segmented
+              value={forceType}
+              onChange={setForceType}
+              options={[
+                { value: "auto", label: "Detectar" },
+                { value: "expense", label: "Solo gastos" },
+                { value: "income", label: "Solo ingresos" },
+              ]}
+            />
+            <p className="mt-1.5 text-xs text-muted">Si en Notion tienes una tabla de gastos y otra de ingresos, importa cada una eligiendo “Solo gastos” o “Solo ingresos”.</p>
+          </div>
+          <div>
             <label className="label">Cuenta destino (si el archivo no la indica)</label>
             <select className="input" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
               {accounts.map((a) => (
-                <option key={a.id} value={a.id}>{a.icon} {a.name}</option>
+                <option key={a.id} value={a.id}>{a.icon} {a.name} ({a.currency === "USD" ? "US$" : "S/"})</option>
               ))}
             </select>
           </div>

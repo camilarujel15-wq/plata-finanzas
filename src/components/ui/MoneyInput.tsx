@@ -11,6 +11,7 @@ export function MoneyInput({
   autoFocus,
   allowNegative,
   id,
+  currency = "PEN",
 }: {
   value: number | null;
   onChange: (cents: number | null) => void;
@@ -18,6 +19,7 @@ export function MoneyInput({
   autoFocus?: boolean;
   allowNegative?: boolean;
   id?: string;
+  currency?: string;
 }) {
   const [text, setText] = useState(value ? centsToInput(value) : "");
   useEffect(() => {
@@ -26,10 +28,10 @@ export function MoneyInput({
   }, [value]);
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">S/</span>
+      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">{currency === "USD" ? "US$" : "S/"}</span>
       <input
         id={id}
-        className="input num pl-9"
+        className={`input num ${currency === "USD" ? "pl-14" : "pl-11"}`}
         inputMode="decimal"
         autoFocus={autoFocus}
         placeholder={placeholder}

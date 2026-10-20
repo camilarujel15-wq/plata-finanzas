@@ -44,4 +44,19 @@ Sueldo,3500,Sueldo,"October 1, 2026",Ingreso`;
     expect(out.rows[0]).toMatchObject({ type: "expense", amount: 1800, confidence: 1, date: "2026-10-05" });
     expect(out.rows[1]).toMatchObject({ type: "income", amount: 350000 });
   });
+
+  it("base de gastos de Notion sin columna Tipo: forzar gastos", () => {
+    const csv = `Concepto,Monto,Fecha
+Taxi,"S/12.50",5 de octubre de 2026
+Netflix,"S/44.90",6 de octubre de 2026`;
+    const rows = Papa.parse<string[]>(csv, { skipEmptyLines: true }).data;
+    const map = detectColumns(rows[0], rows.slice(1));
+    const auto = buildRows(rows.slice(1), map, { categories: cats, rules: [], existing: [] });
+    expect(auto.rows[0].type).toBe("income");
+    const forced = buildRows(rows.slice(1), map, { categories: cats, rules: [], existing: [], forceType: "expense" });
+    expect(forced.rows.map((r) => [r.type, r.amount, cats.find((c) => c.id === r.categoryId)?.key])).toEqual([
+      ["expense", 1250, "transport"],
+      ["expense", 4490, "subscriptions"],
+    ]);
+  });
 });

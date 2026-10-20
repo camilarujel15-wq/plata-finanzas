@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { useStore } from "@/lib/store/store";
-import { useAccounts, useCategories, useTransactions } from "@/lib/store/selectors";
+import { useAccounts, useBaseTransactions, useCategories, useTransactions } from "@/lib/store/selectors";
 import { PageHeader, Empty } from "@/components/ui/bits";
 import { Money } from "@/components/ui/Money";
 import { TxRow } from "@/components/tx/TxRow";
@@ -17,6 +17,8 @@ export default function Movimientos() {
   const router = useRouter();
   const s = useStore();
   const txs = useTransactions();
+  const baseTxs = useBaseTransactions();
+  const baseAmount = useMemo(() => new Map(baseTxs.map((t) => [t.id, t.amount])), [baseTxs]);
   const accounts = useAccounts(true);
   const categories = useCategories();
   const [period, setPeriod] = useState<string | "all">(currentPeriod());
@@ -54,10 +56,13 @@ export default function Movimientos() {
   const totals = useMemo(
     () =>
       filtered.reduce(
-        (a, t) => (t.type === "income" ? { ...a, inc: a.inc + t.amount } : t.type === "expense" ? { ...a, exp: a.exp + t.amount } : a),
+        (a, t) => {
+          const v = baseAmount.get(t.id) ?? t.amount;
+          return t.type === "income" ? { ...a, inc: a.inc + v } : t.type === "expense" ? { ...a, exp: a.exp + v } : a;
+        },
         { inc: 0, exp: 0 },
       ),
-    [filtered],
+    [filtered, baseAmount],
   );
 
   const clearParam = (k: string) => {
@@ -125,7 +130,7 @@ export default function Movimientos() {
       <div className="mt-3 space-y-3">
         {groups.length === 0 && <Empty icon="🔍" title="Sin movimientos" body="Cambia los filtros o registra uno con el botón +." />}
         {groups.map(([date, list]) => {
-          const net = list.reduce((a, t) => a + (t.type === "income" ? t.amount : t.type === "expense" ? -t.amount : 0), 0);
+          const net = list.reduce((a, t) => a + (t.type === "income" ? baseAmount.get(t.id) ?? t.amount : t.type === "expense" ? -(baseAmount.get(t.id) ?? t.amount) : 0), 0);
           return (
             <section key={date}>
               <div className="mb-1 flex items-center justify-between px-1 text-xs font-medium text-muted">

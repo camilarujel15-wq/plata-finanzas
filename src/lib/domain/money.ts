@@ -22,7 +22,7 @@ export function formatMoney(
   opts: { currency?: string; locale?: string; compact?: boolean; sign?: boolean } = {},
 ): string {
   const { currency = "PEN", locale = "es-PE", compact = false, sign = false } = opts;
-  const s = fmt(currency, locale, compact).format(Math.abs(cents) / 100);
+  const s = fmt(currency, locale, compact).format(Math.abs(cents) / 100).replace("USD", "US$");
   if (cents < 0) return `−${s}`;
   if (sign && cents > 0) return `+${s}`;
   return s;

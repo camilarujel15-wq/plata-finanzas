@@ -1,4 +1,5 @@
 import type { Account, Goal, GoalContribution, ISODate, Transaction } from "./types";
+import { toBase, type Fx } from "./fx";
 
 export const alive = <T extends { deletedAt?: string | null }>(xs: T[]) => xs.filter((x) => !x.deletedAt);
 
@@ -8,7 +9,7 @@ export function txDelta(tx: Transaction, accountId: string): number {
   if (tx.type === "income") return tx.accountId === accountId ? tx.amount : 0;
   let d = 0;
   if (tx.accountId === accountId) d -= tx.amount;
-  if (tx.toAccountId === accountId) d += tx.amount;
+  if (tx.toAccountId === accountId) d += tx.toAmount ?? tx.amount;
   return d;
 }
 
@@ -28,7 +29,7 @@ export function accountBalances(
     if (until && tx.date > until) continue;
     if (out.has(tx.accountId)) out.set(tx.accountId, out.get(tx.accountId)! + txDelta(tx, tx.accountId));
     if (tx.type === "transfer" && tx.toAccountId && out.has(tx.toAccountId)) {
-      out.set(tx.toAccountId, out.get(tx.toAccountId)! + tx.amount);
+      out.set(tx.toAccountId, out.get(tx.toAccountId)! + (tx.toAmount ?? tx.amount));
     }
   }
   return out;
@@ -39,17 +40,21 @@ export function goalSaved(goalId: string, contributions: GoalContribution[]): nu
 }
 
 export interface Position {
-  /** Activos líquidos: bancos, ahorros, wallets y efectivo. */
+  /** Dinero líquido: bancos, ahorros, wallets y efectivo (en moneda principal). */
   assets: number;
+  /** Inversiones (terreno, cursos, fondos…): valor actual o lo aportado. */
+  investments: number;
+  /** Lo que otras personas te deben. */
+  receivables: number;
   /** Deuda en tarjetas (positivo). */
   debt: number;
-  /** Patrimonio neto = activos − deuda. */
+  /** Patrimonio neto = líquido + inversiones + por cobrar − deuda. */
   netWorth: number;
   /** Dinero apartado para metas (sobres virtuales). */
   reserved: number;
   /**
    * "Disponible real": lo que realmente puedes gastar hoy =
-   * activos − deuda de tarjetas − apartado para metas.
+   * líquido − deuda de tarjetas − apartado para metas. Las inversiones y lo que te deben no cuentan.
    */
   available: number;
 }
@@ -59,18 +64,23 @@ export function position(
   balances: Map<string, number>,
   goals: Goal[],
   contributions: GoalContribution[],
+  fx: Fx = { base: "PEN", usdRate: 3.75 },
 ): Position {
   let assets = 0;
+  let investments = 0;
+  let receivables = 0;
   let debt = 0;
   for (const a of accounts) {
     if (a.deletedAt || a.archived) continue;
-    const b = balances.get(a.id) ?? 0;
+    const b = toBase(balances.get(a.id) ?? 0, a.currency, fx);
     if (a.type === "credit_card") debt += Math.max(0, -b);
+    else if (a.type === "investment") investments += a.marketValue != null ? toBase(a.marketValue, a.currency, fx) : b;
+    else if (a.type === "receivable") receivables += Math.max(0, b);
     else assets += b;
   }
   const reserved = goals
     .filter((g) => !g.deletedAt && !g.archived)
     .reduce((s, g) => s + Math.max(0, goalSaved(g.id, contributions)), 0);
-  const netWorth = assets - debt;
-  return { assets, debt, netWorth, reserved, available: netWorth - reserved };
+  const liquidNet = assets - debt;
+  return { assets, investments, receivables, debt, netWorth: liquidNet + investments + receivables, reserved, available: liquidNet - reserved };
 }

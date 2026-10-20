@@ -7,7 +7,10 @@ import { IconBubble, Segmented } from "@/components/ui/bits";
 import { useFormat } from "@/components/ui/Money";
 import { useUI } from "@/lib/store/ui";
 import { useStore } from "@/lib/store/store";
-import { useAccounts, useBalances, useCategoriesByFrequency } from "@/lib/store/selectors";
+import { useAccounts, useBalances, useCategoriesByFrequency, useFx, useSpendableAccounts } from "@/lib/store/selectors";
+import { convert } from "@/lib/domain/fx";
+import { symbol } from "@/components/ui/Money";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { parseEntry } from "@/lib/domain/parse";
 import { suggestCategory } from "@/lib/domain/categorize";
 import { addDays, dayLabel, today } from "@/lib/domain/dates";
@@ -33,12 +36,15 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
   const qa = useUI((s) => s.quickAdd);
   const toast = useUI((s) => s.toast);
   const store = useStore();
-  const accounts = useAccounts();
+  const allAccounts = useAccounts();
+  const accounts = useSpendableAccounts();
+  const fx = useFx();
   const balances = useBalances();
   const fmt = useFormat();
   const editing = qa.editId ? store.transactions.find((t) => t.id === qa.editId) : undefined;
 
   const defaultAccount =
+    allAccounts.find((a) => a.id === qa.fromAccountId)?.id ??
     accounts.find((a) => a.id === store.settings.lastAccountId)?.id ??
     accounts.find((a) => a.id === store.settings.defaultAccountId)?.id ??
     accounts[0]?.id ??
@@ -48,7 +54,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
   const [digits, setDigits] = useState(editing ? centsToInput(editing.amount) : "");
   const [accountId, setAccountId] = useState<string | null>(editing?.accountId ?? defaultAccount);
   const [toAccountId, setToAccountId] = useState<string | null>(
-    editing?.toAccountId ?? accounts.find((a) => a.id !== defaultAccount)?.id ?? null,
+    editing?.toAccountId ?? qa.toAccountId ?? accounts.find((a) => a.id !== defaultAccount)?.id ?? null,
   );
   const [categoryId, setCategoryId] = useState<string | null>(editing?.categoryId ?? null);
   const [date, setDate] = useState(editing?.date ?? today());
@@ -71,12 +77,21 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
     [note, type, store.categories, store.rules],
   );
 
+  const kindFor = useCallback(
+    (to?: { type: string } | null): TransferKind =>
+      to?.type === "credit_card" ? "card_payment" : to?.type === "savings" ? "savings" : to?.type === "investment" ? "investment" : to?.type === "receivable" ? "loan" : "internal",
+    [],
+  );
+  const fromAcc = allAccounts.find((a) => a.id === accountId);
+  const toAcc = allAccounts.find((a) => a.id === toAccountId);
+  const currency = fromAcc?.currency ?? fx.base;
+  const crossCurrency = type === "transfer" && !!toAcc && toAcc.currency !== currency;
+  const [toAmountOverride, setToAmountOverride] = useState<number | null>(editing?.toAmount ?? null);
   const transferKind: TransferKind = useMemo(() => {
-    const to = accounts.find((a) => a.id === toAccountId);
-    if (to?.type === "credit_card") return "card_payment";
-    if (to?.type === "savings") return "savings";
-    return "internal";
-  }, [accounts, toAccountId]);
+    if (fromAcc?.type === "receivable") return "repayment";
+    const to = allAccounts.find((a) => a.id === toAccountId);
+    return kindFor(to);
+  }, [allAccounts, toAccountId, fromAcc, kindFor]);
 
   const press = useCallback((k: string) => {
     setDigits((d) => {
@@ -128,13 +143,18 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
         setTimeout(() => setShake(false), 400);
         return;
       }
-      const kind: TransferKind | null = t === "transfer" ? (to ? accounts.find((a) => a.id === to)?.type === "credit_card" ? "card_payment" : accounts.find((a) => a.id === to)?.type === "savings" ? "savings" : "internal" : transferKind) : null;
+      const src = allAccounts.find((a) => a.id === acc);
+      const dst = allAccounts.find((a) => a.id === to);
+      const kind: TransferKind | null = t === "transfer" ? (src?.type === "receivable" ? "repayment" : kindFor(dst)) : null;
+      const toAmount =
+        t === "transfer" && src && dst && src.currency !== dst.currency ? toAmountOverride ?? convert(amt, src.currency, dst.currency, fx) : null;
       const payload = {
         type: t,
         amount: amt,
         accountId: acc,
         toAccountId: t === "transfer" ? to : null,
         transferKind: kind,
+        toAmount,
         categoryId: t === "transfer" ? null : cat,
         date: over.date ?? date,
         merchant: n || undefined,
@@ -156,7 +176,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
             ? TRANSFER_KIND_LABEL[kind!]
             : `${catObj?.icon ?? ""} ${catObj?.name ?? ""}`;
         toast({
-          title: `${t === "income" ? "Ingreso" : t === "transfer" ? "Transferencia" : "Gasto"} ${fmt(amt)}`,
+          title: `${t === "income" ? "Ingreso" : t === "transfer" ? "Transferencia" : "Gasto"} ${fmt(amt, { currency: src?.currency })}`,
           body: `${label} · ${dayLabel(payload.date)}`,
           tone: "success",
           action: { label: "Deshacer", run: () => store.deleteTransaction(res.tx.id) },
@@ -166,7 +186,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       for (const n2 of notices) toast({ title: n2.title, body: n2.body, tone: "warn" }, 7000);
       onClose();
     },
-    [type, amount, accountId, toAccountId, categoryId, note, tags, date, source, editing, store, accounts, transferKind, toast, fmt, onClose],
+    [type, amount, accountId, toAccountId, categoryId, note, tags, date, source, editing, store, allAccounts, kindFor, toAmountOverride, fx, toast, fmt, onClose],
   );
 
   /** Aplica el texto/voz interpretado. Si está completo, guarda directamente. */
@@ -291,7 +311,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
           )}
         </div>
         <div className={`num mt-1 flex items-start text-[48px] font-extrabold leading-none tracking-tight ${type === "income" ? "text-pos" : ""} ${shake ? "text-neg" : ""}`}>
-          <span className="mr-1.5 mt-1.5 text-2xl font-bold text-muted">S/</span>
+          <span className="mr-1.5 mt-1.5 text-2xl font-bold text-muted">{symbol(currency)}</span>
           {digits || "0"}
         </div>
         {note && type !== "transfer" && <div className="mt-2 max-w-full truncate rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">{note}</div>}
@@ -324,7 +344,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       {/* Cuentas */}
       <div className="mt-3">
         <div className="label">{type === "transfer" ? "Desde" : type === "income" ? "A la cuenta" : "Pagado con"}</div>
-        <AccountChips value={accountId} onChange={setAccountId} balances={balances} fmt={fmt} />
+        <AccountChips value={accountId} onChange={setAccountId} balances={balances} fmt={fmt} includeAll={type === "transfer"} />
       </div>
 
       {type === "transfer" ? (
@@ -332,7 +352,18 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
           <div className="label flex items-center gap-1">
             <ArrowRight size={12} /> Hacia · <span className="normal-case tracking-normal text-brand-strong">{TRANSFER_KIND_LABEL[transferKind]}</span>
           </div>
-          <AccountChips value={toAccountId} onChange={setToAccountId} balances={balances} fmt={fmt} exclude={accountId} />
+          <AccountChips value={toAccountId} onChange={setToAccountId} balances={balances} fmt={fmt} exclude={accountId} includeAll />
+          {crossCurrency && toAcc && (
+            <div className="mt-3 animate-rise rounded-2xl bg-surface-2 p-3">
+              <div className="label mb-1.5">Llega a {toAcc.name} ({symbol(toAcc.currency)})</div>
+              <MoneyInput
+                value={toAmountOverride ?? convert(amount, currency, toAcc.currency, fx)}
+                onChange={setToAmountOverride}
+                currency={toAcc.currency}
+              />
+              <p className="mt-1.5 text-[11px] text-muted">Tipo de cambio: S/ {fx.usdRate} por US$ 1. Corrige el monto si tu banco usó otro.</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="mt-3">
@@ -423,14 +454,18 @@ function AccountChips({
   balances,
   fmt,
   exclude,
+  includeAll,
 }: {
   value: string | null;
   onChange: (id: string) => void;
   balances: Map<string, number>;
-  fmt: (v: number, o?: { compact?: boolean }) => string;
+  fmt: (v: number, o?: { compact?: boolean; currency?: string }) => string;
   exclude?: string | null;
+  includeAll?: boolean;
 }) {
-  const accounts = useAccounts().filter((a) => a.id !== exclude);
+  const all = useAccounts();
+  const spendable = useSpendableAccounts();
+  const accounts = (includeAll ? all : spendable).filter((a) => a.id !== exclude);
   if (!accounts.length) return <p className="text-sm text-muted">Crea una cuenta en Más → Cuentas.</p>;
   return (
     <div className="-mx-5 flex gap-2 overflow-x-auto px-5 no-scrollbar">
@@ -438,7 +473,7 @@ function AccountChips({
         <button key={a.id} onClick={() => onChange(a.id)} className={`chip py-2 pl-2 ${value === a.id ? "chip-on" : ""}`}>
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-sm">{a.icon}</span>
           <span>{a.name}</span>
-          <span className={`num text-xs ${value === a.id ? "opacity-70" : "text-muted"}`}>{fmt(balances.get(a.id) ?? 0, { compact: true })}</span>
+          <span className={`num text-xs ${value === a.id ? "opacity-70" : "text-muted"}`}>{fmt(balances.get(a.id) ?? 0, { compact: true, currency: a.currency })}</span>
         </button>
       ))}
     </div>
