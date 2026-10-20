@@ -34,7 +34,7 @@ npm run build
 
 Sin variables de entorno la app funciona en **modo local** (IndexedDB). Para sincronizar:
 
-1. Crea un proyecto en [Supabase](https://supabase.com) y ejecuta en orden los 3 archivos de `supabase/migrations/` (SQL editor o `supabase db push`).
+1. Crea un proyecto en [Supabase](https://supabase.com) y copia todo el contenido de `supabase/setup.sql` en *SQL Editor* y ejecútalo (SQL editor o `supabase db push`).
 2. En *Authentication → Sign In / Providers → Email*, desactiva **Confirm email** (o deja que llegue el correo de confirmación).
 3. Copia `.env.example` a `.env.local` y completa `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 4. Despliega en Vercel: *Add New → Project* → importa `plata-finanzas` → *Deploy* (detecta Next.js solo).
