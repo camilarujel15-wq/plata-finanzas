@@ -33,10 +33,10 @@ export function Sheet({ open, onClose, title, children, footer, tall }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true">
-      <button aria-label="Cerrar" className="absolute inset-0 animate-fade-in bg-[#0b1220]/50 backdrop-blur-[3px]" onClick={onClose} />
+      <button aria-label="Cerrar" className="absolute inset-0 animate-fade-in bg-black/40" onClick={onClose} />
       <div
         ref={panel}
-        className={`relative flex w-full max-w-lg animate-sheet-up flex-col rounded-t-[30px] bg-surface shadow-float transition-transform ${tall ? "max-h-[95dvh]" : "max-h-[90dvh]"}`}
+        className={`relative flex w-full max-w-lg animate-sheet-up flex-col rounded-t-[20px] bg-surface transition-transform ${tall ? "max-h-[95dvh]" : "max-h-[90dvh]"}`}
       >
         <div
           className="flex shrink-0 cursor-grab touch-none items-center justify-between px-5 pb-1 pt-3"
@@ -51,14 +51,14 @@ export function Sheet({ open, onClose, title, children, footer, tall }: Props) {
             startY.current = null;
           }}
         >
-          <div className="absolute left-1/2 top-2 h-1.5 w-11 -translate-x-1/2 rounded-full bg-line" />
-          <div className="mt-1.5 text-lg font-bold tracking-tight">{title}</div>
-          <button aria-label="Cerrar" onClick={onClose} className="tap mt-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-muted">
+          <div className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-line" />
+          <div className="mt-1.5 text-[17px] font-semibold">{title}</div>
+          <button aria-label="Cerrar" onClick={onClose} className="tap mt-1.5 flex h-9 w-9 items-center justify-center rounded-full text-muted">
             <X size={18} />
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-2">{children}</div>
-        {footer && <div className="pb-safe shrink-0 px-5 pt-3">{footer}</div>}
+        {footer && <div className="pb-safe shrink-0 border-t border-line px-5 pt-3">{footer}</div>}
       </div>
     </div>
   );

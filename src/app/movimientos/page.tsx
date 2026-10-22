@@ -128,7 +128,7 @@ export default function Movimientos() {
       </div>
 
       <div className="mt-3 space-y-3">
-        {groups.length === 0 && <Empty icon="🔍" title="Sin movimientos" body="Cambia los filtros o registra uno con el botón +." />}
+        {groups.length === 0 && <Empty icon="i:search" title="Sin movimientos" body="Cambia los filtros o registra uno con el botón +." />}
         {groups.map(([date, list]) => {
           const net = list.reduce((a, t) => a + (t.type === "income" ? baseAmount.get(t.id) ?? t.amount : t.type === "expense" ? -(baseAmount.get(t.id) ?? t.amount) : 0), 0);
           return (

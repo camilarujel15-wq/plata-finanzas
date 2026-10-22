@@ -95,8 +95,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (!hydrated || locked === null) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-[#0b1220]">
-        <div className="h-12 w-12 animate-pulse rounded-[18px] bg-gradient-to-br from-emerald-300 to-emerald-600" />
+      <div className="flex min-h-dvh items-center justify-center bg-bg">
+        <div className="h-10 w-10 animate-pulse rounded-full bg-brand/20" />
       </div>
     );
   }
@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <main className="mx-auto min-h-dvh max-w-lg overflow-x-clip px-5 pb-40">{children}</main>
+      <main className="mx-auto min-h-dvh max-w-lg overflow-x-clip px-5 pb-32">{children}</main>
       {hasAccounts && <BottomNav />}
       <QuickAdd />
       <Toaster />

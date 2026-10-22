@@ -46,7 +46,7 @@ export function CategoryDonut({ data, total }: { data: CategorySlice[]; total: n
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
         <div className="text-xs text-muted">Total</div>
-        <div className="num text-xl font-bold">{fmt(total, { compact: total > 1_000_000 })}</div>
+        <div className="num text-xl font-semibold">{fmt(total, { compact: total > 1_000_000 })}</div>
       </div>
     </div>
   );
@@ -61,7 +61,7 @@ export function CashflowArea({ data }: { data: { day: number; cumulative: number
       <AreaChart data={rows} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="cf" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={c.brand} stopOpacity={0.35} />
+            <stop offset="0%" stopColor={c.brand} stopOpacity={0.18} />
             <stop offset="100%" stopColor={c.brand} stopOpacity={0} />
           </linearGradient>
         </defs>
@@ -107,7 +107,7 @@ export function TrendLine({ data }: { data: { period: string; expense: number }[
         <YAxis width={44} tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: c.muted }} tickFormatter={(v: number) => fmt(v * 100, { compact: true }).replace("S/", "").trim()} />
         <ReferenceLine y={avg} stroke={c.muted} strokeDasharray="4 3" label={{ value: "prom.", fill: c.muted, fontSize: 10, position: "insideTopRight" }} />
         <Tooltip contentStyle={style} formatter={(v: number) => [fmt(Math.round(v * 100)), "Gasto"]} />
-        <Area isAnimationActive={false} type="monotone" dataKey="v" stroke={c.neg} strokeWidth={2} fill={c.neg} fillOpacity={0.12} />
+        <Area isAnimationActive={false} type="monotone" dataKey="v" stroke="#374151" strokeWidth={1.8} fill="#374151" fillOpacity={0.06} />
       </AreaChart>
     </ResponsiveContainer>
   );

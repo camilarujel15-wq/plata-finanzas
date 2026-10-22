@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useStore } from "@/lib/store/store";
@@ -57,7 +58,7 @@ export default function Presupuestos() {
       )}
 
       {!rows.length && (
-        <Empty icon="📊" title="Sin presupuestos" body="Define cuánto quieres gastar al mes por categoría. Te avisamos al 50%, 80% y 100%." action={<button className="btn-primary" onClick={() => setEditing("")}>Crear presupuesto</button>} />
+        <Empty icon="i:chart" title="Sin presupuestos" body="Define cuánto quieres gastar al mes por categoría. Te avisamos al 50%, 80% y 100%." action={<button className="btn-primary" onClick={() => setEditing("")}>Crear presupuesto</button>} />
       )}
 
       <div className="mt-3 card divide-y divide-line/60">
@@ -66,7 +67,7 @@ export default function Presupuestos() {
           return (
             <button key={r.budget.id} className="tap block w-full px-4 py-3 text-left" onClick={() => setEditing(r.budget.categoryId)}>
               <div className="flex items-center gap-3">
-                <IconBubble icon={c?.icon ?? "❔"} color={c?.color ?? "#999"} size={34} />
+                <IconBubble icon={c?.icon ?? "i:help"} color={c?.color ?? "#999"} size={34} />
                 <div className="min-w-0 flex-1">
                   <div className="flex justify-between text-sm">
                     <span className="font-medium">{c?.name}</span>
@@ -120,7 +121,7 @@ function BudgetSheet({ categoryId, onClose }: { categoryId: string; onClose: () 
           <div className="flex flex-wrap gap-2">
             {cats.map((c) => (
               <button key={c.id} className={`chip ${cat === c.id ? "chip-on" : ""}`} onClick={() => setCat(c.id)}>
-                {c.icon} {c.name}
+                <AppIcon icon={c.icon} size={15} className="shrink-0" /> {c.name}
               </button>
             ))}
           </div>

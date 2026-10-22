@@ -63,17 +63,15 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   const waiting = Date.now() < waitUntil;
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-[#0b1220] text-white">
-      <div className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-emerald-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-surface text-ink">
       <div className="pt-safe relative flex flex-1 flex-col items-center justify-center px-8">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[22px] bg-white/[0.08] ring-1 ring-white/10">
-          <Lock size={26} className="text-emerald-300" />
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white">
+          <Lock size={24} />
         </div>
-        <h1 className="text-xl font-bold">{name ? `Hola, ${name}` : "Plata está bloqueada"}</h1>
-        <p className="mb-8 mt-1 text-sm text-white/55">{waiting ? "Demasiados intentos. Espera 30 segundos." : bio ? "Usa tu huella/rostro o tu PIN" : "Ingresa tu PIN"}</p>
-        <PinPad value={pin} onChange={setPin} length={length} dark error={error} onBiometric={bio ? tryBio : undefined} />
-        <button className="mt-8 text-sm font-medium text-white/50" onClick={() => setForgot(true)}>
+        <h1 className="text-lg font-semibold">{name ? `Hola, ${name}` : "Plata está bloqueada"}</h1>
+        <p className="mb-8 mt-1 text-sm text-muted">{waiting ? "Demasiados intentos. Espera 30 segundos." : bio ? "Usa tu huella/rostro o tu PIN" : "Ingresa tu PIN"}</p>
+        <PinPad value={pin} onChange={setPin} length={length} error={error} onBiometric={bio ? tryBio : undefined} />
+        <button className="mt-8 text-sm font-medium text-brand" onClick={() => setForgot(true)}>
           ¿Olvidaste tu PIN?
         </button>
       </div>

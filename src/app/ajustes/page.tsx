@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useState } from "react";
 import { Cloud, Download, Upload } from "lucide-react";
 import { COLLECTIONS, useStore, type FinanceData } from "@/lib/store/store";
@@ -151,7 +152,7 @@ function CloudSection() {
     return (
       <Section title="Respaldo en la nube">
         <div className="card p-4 text-sm leading-relaxed text-muted">
-          <Cloud size={20} className="mb-2 text-brand-strong" />
+          <Cloud size={20} className="mb-2 text-brand" />
           Esta versión aún no tiene la nube configurada: tus datos viven solo en este celular. Descarga un respaldo abajo mientras tanto.
         </div>
       </Section>
@@ -170,7 +171,7 @@ function CloudSection() {
               <div className="min-w-0">
                 <div className="truncate font-semibold">{user.email}</div>
                 <div className="text-xs text-muted">
-                  {pending ? `${pending} cambios por subir` : "Todo respaldado ✓"}
+                  {pending ? `${pending} cambios por subir` : "Todo respaldado"}
                   {lastPulledAt && ` · ${new Date(lastPulledAt).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}`}
                 </div>
               </div>
@@ -221,12 +222,12 @@ function WidgetSection() {
     <Section title="Widget de pantalla de inicio">
       <div className="card grid gap-4 p-4 text-sm">
         <div className="hero p-4">
-          <div className="text-[11px] font-semibold text-emerald-200">Disponible real</div>
-          <div className="text-xl font-extrabold">S/ ••••</div>
+          <div className="text-[11px] font-semibold text-white">Disponible real</div>
+          <div className="text-xl font-semibold">S/ ••••</div>
           <div className="mt-3 grid grid-cols-5 gap-1.5">
-            {[...(favs.length ? favs.map((id) => cats.find((c) => c.id === id)).filter(Boolean) : cats.slice(0, 4)), { id: "voice", icon: "🎙️", name: "Dictar" }].slice(0, 5).map((c) => (
+            {[...(favs.length ? favs.map((id) => cats.find((c) => c.id === id)).filter(Boolean) : cats.slice(0, 4)), { id: "voice", icon: "i:music", name: "Dictar" }].slice(0, 5).map((c) => (
               <div key={c!.id} className="flex flex-col items-center rounded-xl bg-white/10 py-1.5 text-[9px] text-white/80">
-                <span className="text-lg">{c!.icon}</span>
+                <AppIcon icon={c!.icon} size={16} />
                 <span className="w-full truncate px-1 text-center">{c!.name}</span>
               </div>
             ))}
@@ -238,7 +239,7 @@ function WidgetSection() {
         <div className="flex flex-wrap gap-2">
           {cats.map((c) => (
             <button key={c.id} className={`chip ${favs.includes(c.id) ? "chip-on" : ""}`} onClick={() => toggle(c.id)}>
-              {c.icon} {c.name}
+              <AppIcon icon={c.icon} size={15} className="shrink-0" /> {c.name}
             </button>
           ))}
         </div>
@@ -250,7 +251,7 @@ function WidgetSection() {
               if (!r.supported) toast({ title: "Agrégalo manualmente", body: "Mantén presionada la pantalla de inicio → Widgets → Plata.", tone: "warn" }, 7000);
             }}
           >
-            📲 Agregar widget a mi pantalla
+            Agregar widget a mi pantalla
           </button>
         ) : (
           <p className="rounded-2xl bg-surface-2 px-4 py-3 text-xs text-muted">El widget está disponible en la app de Android.</p>

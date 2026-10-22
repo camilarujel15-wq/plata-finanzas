@@ -24,7 +24,7 @@ export function PinPad({
     if (k === "del") onChange(value.slice(0, -1));
     else if (value.length < length) onChange(value + k);
   };
-  const keyCls = dark ? "bg-white/[0.07] text-white active:bg-white/15" : "bg-surface-2 text-ink active:bg-line";
+  const keyCls = dark ? "text-white active:bg-white/10" : "text-ink active:bg-surface-2";
 
   return (
     <div className="flex flex-col items-center">
@@ -32,27 +32,27 @@ export function PinPad({
         {Array.from({ length }, (_, i) => (
           <span
             key={i}
-            className={`h-3.5 w-3.5 rounded-full transition ${i < value.length ? (error ? "bg-rose-400" : "bg-emerald-400 scale-110") : dark ? "bg-white/20" : "bg-line"}`}
+            className={`h-3 w-3 rounded-full border transition ${i < value.length ? (error ? "border-neg bg-neg" : "border-brand bg-brand") : dark ? "border-white/40" : "border-muted/50"}`}
           />
         ))}
       </div>
       <div className="grid w-full max-w-[300px] grid-cols-3 gap-3">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((k) => (
-          <button key={k} onClick={() => press(k)} className={`num flex aspect-[1.25] items-center justify-center rounded-[22px] text-[26px] font-semibold transition active:scale-95 ${keyCls}`}>
+          <button key={k} onClick={() => press(k)} className={`num flex aspect-[1.25] items-center justify-center rounded-full text-[26px] font-normal transition ${keyCls}`}>
             {k}
           </button>
         ))}
         {onBiometric ? (
-          <button aria-label="Usar huella o rostro" onClick={onBiometric} className={`flex aspect-[1.25] items-center justify-center rounded-[22px] transition active:scale-95 ${dark ? "text-emerald-300" : "text-brand-strong"}`}>
+          <button aria-label="Usar huella o rostro" onClick={onBiometric} className={`flex aspect-[1.25] items-center justify-center rounded-2xl transition active:scale-95 ${dark ? "text-white" : "text-brand"}`}>
             <Fingerprint size={30} />
           </button>
         ) : (
           <span />
         )}
-        <button onClick={() => press("0")} className={`num flex aspect-[1.25] items-center justify-center rounded-[22px] text-[26px] font-semibold transition active:scale-95 ${keyCls}`}>
+        <button onClick={() => press("0")} className={`num flex aspect-[1.25] items-center justify-center rounded-full text-[26px] font-normal transition ${keyCls}`}>
           0
         </button>
-        <button aria-label="Borrar" onClick={() => press("del")} className={`flex aspect-[1.25] items-center justify-center rounded-[22px] transition active:scale-95 ${dark ? "text-white/70" : "text-muted"}`}>
+        <button aria-label="Borrar" onClick={() => press("del")} className={`flex aspect-[1.25] items-center justify-center rounded-2xl transition active:scale-95 ${dark ? "text-white/70" : "text-muted"}`}>
           <Delete size={26} />
         </button>
       </div>

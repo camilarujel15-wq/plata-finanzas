@@ -7,8 +7,8 @@ const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PW ?? "playwright");
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const font = fs.readFileSync(path.join(root, "node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2")).toString("base64");
-const css = `@font-face{font-family:'Plus Jakarta Sans';src:url(data:font/woff2;base64,${font}) format('woff2');font-weight:200 800}html,body{margin:0;background:transparent}`;
+const font = fs.readFileSync(path.join(root, "node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")).toString("base64");
+const css = `@font-face{font-family:'Inter';src:url(data:font/woff2;base64,${font}) format('woff2');font-weight:200 800}html,body{margin:0;background:transparent}`;
 const svg = (f) => fs.readFileSync(path.join(root, "design", f), "utf8");
 const res = path.join(root, "android/app/src/main/res");
 
@@ -31,10 +31,10 @@ for (const [d, k] of Object.entries(densities)) {
   await render(svg("foreground.svg"), 108 * k, `${res}/mipmap-${d}/ic_launcher_foreground.png`);
 }
 // Splash (fondo sólido + marca centrada) y PWA
-await render(svg("foreground.svg"), 432, `${res}/drawable/splash.png`, { bg: "#0B1220" });
+await render(svg("foreground.svg"), 432, `${res}/drawable/splash.png`, { bg: "#0E5A48" });
 await render(svg("icon.svg"), 192, `${root}/public/icons/icon-192.png`);
 await render(svg("icon.svg"), 512, `${root}/public/icons/icon-512.png`);
-await render(svg("foreground.svg"), 512, `${root}/public/icons/icon-maskable-512.png`, { bg: "#0B1220" });
+await render(svg("foreground.svg"), 512, `${root}/public/icons/icon-maskable-512.png`, { bg: "#0E5A48" });
 fs.copyFileSync(path.join(root, "design/icon.svg"), path.join(root, "public/icon.svg"));
 await browser.close();
 console.log("ok");

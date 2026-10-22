@@ -22,6 +22,7 @@
     "@capacitor/haptics": "6.0.2",
     "@capacitor/splash-screen": "6.0.3",
     "@capacitor/status-bar": "6.0.2",
+    "@fontsource-variable/inter": "5.1.0",
     "@fontsource-variable/plus-jakarta-sans": "5.1.1",
     "@supabase/supabase-js": "2.117.2",
     "lucide-react": "0.451.0",

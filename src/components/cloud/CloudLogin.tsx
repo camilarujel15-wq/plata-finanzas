@@ -63,7 +63,7 @@ export function CloudLogin({ initialMode = "signup", onDone }: { initialMode?: "
         {busy ? "Conectando…" : mode === "signup" ? "Activar respaldo" : "Entrar y restaurar"}
       </button>
       <p className="flex items-start gap-2 text-xs leading-relaxed text-muted">
-        <ShieldCheck size={16} className="mt-0.5 shrink-0 text-brand-strong" />
+        <ShieldCheck size={16} className="mt-0.5 shrink-0 text-brand" />
         Tus datos viajan cifrados y solo tú puedes verlos. Al cambiar de celular, entra con el mismo correo y todo vuelve.
       </p>
     </form>

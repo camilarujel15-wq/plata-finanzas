@@ -97,3 +97,9 @@ Cada persona instala el mismo `Plata.apk` y crea **su propia cuenta** de respald
 - **Mi mes:** proyección = disponible para gastar − fijos pendientes + ingresos por recibir − gasto variable estimado. El gasto variable usa el ritmo del mes, o el de los últimos 60 días si aún no pasan 7 días del mes, sin contar los fijos. También muestra comentarios, el calendario de pagos y el detalle de cada tarjeta.
 - **Tarjetas** (`closing_day`, `due_day`, `tea`): lo comprado entre dos cierres se factura en el siguiente cierre y se paga en la fecha de pago (≈25 días después). Pagar el total = sin intereses. **En cuotas:** la cuota k llega en el k-ésimo estado de cuenta y se calcula con el sistema francés `P·i/(1−(1+i)^−n)`, con `i = (1+TEA)^(1/12) − 1`; sin intereses = `P/n`. El disponible solo descuenta lo que vence (estados por pagar + ciclo actual), no las cuotas futuras.
 - Migración: `supabase/migrations/0006_gastos_fijos_tarjetas.sql`.
+
+## 6.11 Rediseño visual (v1.4)
+- Estética sobria tipo banca: un solo color de marca (verde pino `#0E5A48`), superficies blancas con borde fino y sin degradados, brillos ni efectos de vidrio. Tipografía Inter con pesos medios.
+- **Siempre claro:** sin modo oscuro, ni en la app ni en el widget ni en la barra de estado de Android (`forceDarkAllowed=false`, temas `Light`).
+- **Íconos de línea** (lucide) en lugar de emojis. Los datos existentes (emojis) se traducen al mostrarse (`AppIcon`) y los íconos nuevos se guardan como `i:clave`. Los colores vivos de versiones anteriores se atenúan al mostrarse con `color-mix`.
+- Inicio: saldo disponible en una tarjeta de color liso, cuatro accesos rápidos (Gasto, Ingreso, Transferir, Dictar), fin de mes, resumen y listas en tarjetas con divisores.

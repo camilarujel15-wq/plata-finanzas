@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import Link from "next/link";
 import { CalendarClock, Check, Settings2 } from "lucide-react";
 import { useStore } from "@/lib/store/store";
@@ -39,12 +40,12 @@ export default function MiMes() {
       />
 
       <section className="hero p-5">
-        <div className={`text-[11px] font-semibold tracking-wide ${ok ? "text-emerald-200" : "text-rose-200"}`}>
-          {ok ? "LLEGAS A FIN DE MES CON" : "TE FALTARÍAN A FIN DE MES"}
+        <div className="text-[13px] text-white/75">
+          {ok ? "Llegas a fin de mes con" : "A fin de mes te faltarían"}
         </div>
-        <Money value={Math.abs(f.projectedEnd)} hidden={hide} className={`mt-2 block text-[38px] font-extrabold leading-none ${ok ? "" : "text-rose-300"}`} />
-        <div className="mt-4 rounded-2xl bg-white/[0.07] px-3 py-2.5 text-[13px] ring-1 ring-white/[0.08]">
-          Para llegar puedes gastar hasta <Money value={f.safePerDay} hidden={hide} className="font-bold text-emerald-200" /> por día en lo variable
+        <Money value={Math.abs(f.projectedEnd)} hidden={hide} className={`mt-2 block text-[34px] font-semibold leading-tight `} />
+        <div className="mt-4 text-[13px] text-white/80">
+          Para llegar puedes gastar hasta <Money value={f.safePerDay} hidden={hide} className="font-semibold text-white" /> por día en lo variable
           <span className="text-white/50"> · hoy vas a {fmt(f.variableDaily)}/día</span>
         </div>
       </section>
@@ -62,7 +63,7 @@ export default function MiMes() {
         <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
           {f.comments.map((c, i) => (
             <div key={i} className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm leading-snug ${TONE[c.tone]}`}>
-              <span className="text-lg leading-none">{c.icon}</span>
+              <AppIcon icon={c.icon} size={18} className="mt-0.5 shrink-0" />
               <span className="text-ink">{c.text}</span>
             </div>
           ))}
@@ -72,7 +73,7 @@ export default function MiMes() {
       <Section title="Pagos del mes" action={<Link href="/gastos-fijos/" className="link">Gestionar</Link>}>
         {f.bills.length === 0 ? (
           <Empty
-            icon="🗓️"
+            icon="i:calendar"
             title="Agrega tus gastos fijos"
             body="Alquiler, luz, internet, celular, cuota del terreno, sueldo… Así sabrás si llegas a fin de mes."
             action={<Link href="/gastos-fijos/" className="btn-primary">Agregar gastos fijos</Link>}
@@ -92,8 +93,8 @@ export default function MiMes() {
             {f.cards.map(({ card, schedule }) => (
               <div key={card.id} className="card p-4 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold">
-                    {card.icon} {card.name}
+                  <span className="font-semibold">
+                    <AppIcon icon={card.icon} size={15} className="shrink-0" /> {card.name}
                   </span>
                   {!card.closingDay && <Link href="/cuentas/" className="link">Configura cierre y pago ›</Link>}
                 </div>
@@ -101,25 +102,25 @@ export default function MiMes() {
                   <div className="mt-2 rounded-2xl bg-surface-2 px-3 py-2.5">
                     <div className="text-xs text-muted">Pago total para no pagar intereses</div>
                     <div className="flex items-baseline justify-between">
-                      <Money value={schedule.nextDue.remaining} hidden={hide} currency={card.currency} className="text-lg font-extrabold" />
+                      <Money value={schedule.nextDue.remaining} hidden={hide} currency={card.currency} className="text-lg font-semibold" />
                       <span className="text-xs font-semibold text-muted">vence {schedule.nextDue.due.slice(8, 10)}/{schedule.nextDue.due.slice(5, 7)}</span>
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-2 text-xs text-pos">✓ No tienes estados de cuenta pendientes.</p>
+                  <p className="mt-2 text-xs text-pos">No tienes estados de cuenta pendientes.</p>
                 )}
                 <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-muted">
                   <div>
                     Ciclo actual
-                    <Money value={schedule.statements.find((s) => s.closing >= t)?.remaining ?? 0} hidden={hide} currency={card.currency} className="block text-sm font-bold text-ink" />
+                    <Money value={schedule.statements.find((s) => s.closing >= t)?.remaining ?? 0} hidden={hide} currency={card.currency} className="block text-sm font-semibold text-ink" />
                   </div>
                   <div>
                     Cuotas futuras
-                    <Money value={schedule.deferredPrincipal} hidden={hide} currency={card.currency} className="block text-sm font-bold text-ink" />
+                    <Money value={schedule.deferredPrincipal} hidden={hide} currency={card.currency} className="block text-sm font-semibold text-ink" />
                   </div>
                   <div>
                     Intereses por pagar
-                    <Money value={schedule.futureInterest} hidden={hide} currency={card.currency} className={`block text-sm font-bold ${schedule.futureInterest ? "text-warn" : "text-ink"}`} />
+                    <Money value={schedule.futureInterest} hidden={hide} currency={card.currency} className={`block text-sm font-semibold ${schedule.futureInterest ? "text-warn" : "text-ink"}`} />
                   </div>
                 </div>
                 <UpcomingStatements statements={schedule.statements.filter((s) => s.closing >= t).slice(0, 4)} currency={card.currency} hide={hide} />
@@ -135,8 +136,8 @@ export default function MiMes() {
 function Line({ label, value, hide, strong }: { label: string; value: number; hide: boolean; strong?: boolean }) {
   return (
     <div className={`flex items-center justify-between gap-3 px-4 py-3 ${strong ? "bg-surface-2/60" : ""}`}>
-      <span className={strong ? "font-bold" : "text-muted"}>{label}</span>
-      <Money value={value} hidden={hide} sign={!strong} tone={strong} className={strong ? "text-base font-extrabold" : "font-semibold"} />
+      <span className={strong ? "font-semibold" : "text-muted"}>{label}</span>
+      <Money value={value} hidden={hide} sign={!strong} tone={strong} className={strong ? "text-base font-semibold" : "font-semibold"} />
     </div>
   );
 }
@@ -167,9 +168,9 @@ function BillRow({ bill: b, hide, today: t }: { bill: Bill; hide: boolean; today
   };
   return (
     <div className={`flex items-center gap-3 px-4 py-3 ${b.status === "paid" ? "opacity-60" : ""}`}>
-      <span className="flex h-[42px] w-[42px] shrink-0 flex-col items-center justify-center rounded-[14px] bg-surface-2 leading-none">
-        <span className="text-[15px]">{b.icon}</span>
-        <span className="mt-0.5 text-[9px] font-bold text-muted">{b.due.slice(8, 10)}/{b.due.slice(5, 7)}</span>
+      <span className="flex h-[42px] w-[42px] shrink-0 flex-col items-center justify-center rounded-full bg-surface-2 leading-none">
+        <AppIcon icon={b.icon} size={17} className="text-ink/80" />
+        <span className="mt-0.5 text-[9px] font-semibold text-muted">{b.due.slice(8, 10)}/{b.due.slice(5, 7)}</span>
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-semibold">{b.name}</div>
@@ -179,9 +180,9 @@ function BillRow({ bill: b, hide, today: t }: { bill: Bill; hide: boolean; today
         </div>
       </div>
       <div className="text-right">
-        <Money value={b.kind === "income" ? b.amount : -b.amount} sign={b.kind === "income"} hidden={hide} className={`text-[15px] font-bold ${b.kind === "income" ? "text-pos" : ""}`} />
+        <Money value={b.kind === "income" ? b.amount : -b.amount} sign={b.kind === "income"} hidden={hide} className={`text-[15px] font-semibold ${b.kind === "income" ? "text-pos" : ""}`} />
         {b.status !== "paid" && (
-          <button onClick={pay} className="mt-0.5 block w-full text-right text-[11px] font-bold text-brand-strong">
+          <button onClick={pay} className="mt-0.5 block w-full text-right text-[11px] font-semibold text-brand">
             {b.kind === "income" ? "Registrar" : "Pagar"} ›
           </button>
         )}

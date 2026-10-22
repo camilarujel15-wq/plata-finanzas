@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { ArrowDownLeft, ArrowUpRight, ChevronRight, Eye, EyeOff, Mic, Sparkles } from "lucide-react";
+import { ArrowLeftRight, ChevronRight, Eye, EyeOff, Mic, Minus, Plus } from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useStore } from "@/lib/store/store";
 import { useUI } from "@/lib/store/ui";
 import { useAccounts, useBalances, useBaseTransactions, useForecast, usePosition, useSpendableAccounts, useTransactions } from "@/lib/store/selectors";
@@ -59,191 +60,193 @@ export default function Dashboard() {
   const perDay = forecast.safePerDay;
   const savingsRate = month.income > 0 ? (month.income - month.expense) / month.income : null;
 
-  const initial = s.settings.displayName.trim() ? s.settings.displayName.trim().charAt(0).toUpperCase() : "🙂";
+  const name = s.settings.displayName.trim();
+  const initial = name ? name.charAt(0).toUpperCase() : "P";
+  const nextBill = forecast.bills.find((b) => b.status !== "paid" && b.kind !== "income");
+  const ok = forecast.projectedEnd >= 0;
+  const forSpending = accounts.filter((a) => countsForAvailable(a) && !a.linkedAccountId);
 
   return (
     <div className="pt-safe">
-      <header className="flex items-center gap-3 pb-4 pt-4">
-        <Link href="/ajustes/" className="tap flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-emerald-600 text-base font-bold text-brand-ink shadow-glow">
+      <header className="flex items-center gap-3 pb-3 pt-4">
+        <Link href="/ajustes/" className="tap flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-[15px] font-semibold text-brand">
           {initial}
         </Link>
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-medium text-muted">{periodLabel(period)}</div>
-          <h1 className="truncate text-xl font-bold tracking-tight">Hola{s.settings.displayName ? `, ${s.settings.displayName}` : ""} 👋</h1>
+          <h1 className="truncate text-[17px] font-semibold">Hola{name ? `, ${name}` : ""}</h1>
+          <div className="text-xs text-muted">{periodLabel(period)}</div>
         </div>
         <button
           aria-label={hide ? "Mostrar montos" : "Ocultar montos"}
           onClick={() => s.setSettings({ hideAmounts: !hide })}
-          className="tap flex h-11 w-11 items-center justify-center rounded-full bg-surface text-muted shadow-card"
+          className="tap flex h-10 w-10 items-center justify-center rounded-full text-muted"
         >
-          {hide ? <EyeOff size={19} /> : <Eye size={19} />}
+          {hide ? <EyeOff size={20} /> : <Eye size={20} />}
         </button>
       </header>
 
-      {/* Disponible para gastar: la única cifra grande. Lo demás vive en Cuentas. */}
-      <section className="hero animate-rise p-5 pb-4">
-        <div className="flex items-center justify-between">
-          <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-emerald-200 ring-1 ring-white/10">DISPONIBLE PARA GASTAR</span>
-          <Link href="/cuentas/" className="text-[11px] font-medium text-white/50">¿Qué cuenta? ›</Link>
+      {/* Saldo disponible: la única cifra grande */}
+      <section className="hero p-5">
+        <div className="flex items-center justify-between text-[13px] text-white/75">
+          <span>Disponible para gastar</span>
+          <Link href="/cuentas/" className="flex items-center gap-0.5 text-white/75">
+            Cuentas <ChevronRight size={14} />
+          </Link>
         </div>
-        <Money value={pos.available} hidden={hide} className={`mt-3 block text-[40px] font-extrabold leading-none tracking-tight ${pos.available < 0 ? "text-rose-300" : ""}`} />
-        {perDay > 0 && (
-          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-400/10 px-3 py-2.5 text-[13px] ring-1 ring-emerald-300/20">
-            <span className="text-lg">🧭</span>
-            <span className="text-white/80">
-              Hoy puedes gastar <Money value={perDay} hidden={hide} className="font-bold text-emerald-200" />
-              <span className="text-white/50"> · {daysLeft} días restantes</span>
+        <Money value={pos.available} hidden={hide} className="mt-1 block text-[34px] font-semibold leading-tight tracking-tight" />
+        <div className="mt-1 text-[13px] text-white/75">
+          {perDay > 0 ? (
+            <>
+              Puedes gastar <Money value={perDay} hidden={hide} className="font-semibold text-white" /> al día · {daysLeft} días restantes
+            </>
+          ) : (
+            "Sin margen para gastos variables este mes"
+          )}
+        </div>
+        <div className="mt-4 flex items-center justify-between border-t border-white/15 pt-3 text-xs text-white/70">
+          <span className="min-w-0 truncate">
+            Patrimonio <Money value={pos.netWorth} hidden={hide} compact className="font-medium text-white" />
+          </span>
+          {pos.spendableDebt > 0 && (
+            <span className="shrink-0">
+              Tarjetas <Money value={-pos.spendableDebt} hidden={hide} compact className="font-medium text-white" />
             </span>
-          </div>
-        )}
-        <Link href="/cuentas/" className="mt-3 flex items-center gap-3 border-t border-white/10 pt-3 text-xs text-white/50">
-          <span className="min-w-0 flex-1 leading-relaxed">
-            <span className="whitespace-nowrap">
-              Patrimonio <Money value={pos.netWorth} hidden={hide} compact className="font-semibold text-white/75" />
-            </span>
-            {pos.spendableDebt > 0 && (
-              <span className="whitespace-nowrap">
-                {" "}· Tarjetas <Money value={-pos.spendableDebt} hidden={hide} compact className="font-semibold text-rose-200/80" />
-              </span>
-            )}
-          </span>
-          <span className="shrink-0 whitespace-nowrap">Cuentas ›</span>
-        </Link>
-      </section>
-
-      {/* Fin de mes */}
-      <Link href="/mi-mes/" className="tap card mt-4 block p-4">
-        <div className="flex items-center gap-3">
-          <span className={`flex h-11 w-11 items-center justify-center rounded-2xl text-xl ${forecast.projectedEnd >= 0 ? "bg-pos/12" : "bg-neg/12"}`}>
-            {forecast.projectedEnd >= 0 ? "🗓️" : "⚠️"}
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-xs font-medium text-muted">{forecast.projectedEnd >= 0 ? "Llegas a fin de mes con" : "A fin de mes te faltarían"}</div>
-            <Money value={Math.abs(forecast.projectedEnd)} hidden={hide} className={`text-lg font-extrabold ${forecast.projectedEnd >= 0 ? "text-pos" : "text-neg"}`} />
-          </div>
-          <span className="link shrink-0 whitespace-nowrap">Mi mes ›</span>
-        </div>
-        {(() => {
-          const next = forecast.bills.find((b) => b.status !== "paid" && b.kind !== "income");
-          const c = forecast.comments.find((x) => x.tone === "bad" || x.tone === "warn") ?? forecast.comments[1];
-          return (
-            <div className="mt-3 grid min-w-0 gap-1.5 border-t border-line/70 pt-3 text-xs text-muted">
-              {next && (
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="min-w-0 flex-1 truncate">
-                    Próximo: {next.icon} {next.name} · {next.due.slice(8, 10)}/{next.due.slice(5, 7)}
-                  </span>
-                  <Money value={next.amount} hidden={hide} className="shrink-0 font-semibold text-ink" />
-                </div>
-              )}
-              {c && <div className="min-w-0 break-words leading-snug">{c.icon} {c.text}</div>}
-              {!forecast.bills.length && <div>➕ Agrega tus gastos fijos para saber si llegas a fin de mes.</div>}
-            </div>
-          );
-        })()}
-      </Link>
-
-      {/* Captura por texto/voz desde el inicio */}
-      <div className="mt-4 flex gap-2">
-        <button onClick={() => openQuickAdd()} className="tap card flex flex-1 items-center gap-3 px-4 py-3.5 text-left">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/12 text-brand-strong">
-            <Sparkles size={17} />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-sm font-semibold">¿Qué gastaste?</span>
-            <span className="block truncate text-xs text-muted">“18 almuerzo yape”</span>
-          </span>
-        </button>
-        <button
-          aria-label="Dictar gasto"
-          onClick={() => openQuickAdd({ autoVoice: true })}
-          className="tap flex w-[60px] items-center justify-center rounded-[22px] bg-gradient-to-br from-emerald-300 to-emerald-500 text-brand-ink shadow-glow"
-        >
-          <Mic size={22} />
-        </button>
-      </div>
-
-      {/* Resumen del mes */}
-      <section className="card mt-4 p-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Flow label="Ingresos" value={month.income} hide={hide} up />
-          <Flow label="Gastos" value={month.expense} hide={hide} />
-        </div>
-        <div className="mt-4 flex items-center justify-between border-t border-line/70 pt-3">
-          <div>
-            <div className="text-xs font-medium text-muted">Ahorro neto del mes</div>
-            <Money value={month.net} hidden={hide} tone className="text-lg font-bold" />
-          </div>
-          {savingsRate !== null && (
-            <div className={`rounded-full px-3 py-1 text-xs font-bold ${savingsRate >= 0.2 ? "bg-pos/12 text-pos" : savingsRate >= 0 ? "bg-warn/12 text-warn" : "bg-neg/12 text-neg"}`}>
-              {Math.round(savingsRate * 100)}% ahorrado
-            </div>
           )}
         </div>
       </section>
 
+      {/* Acciones rápidas */}
+      <div className="mt-4 grid grid-cols-4 gap-2">
+        {[
+          { label: "Gasto", icon: Minus, run: () => openQuickAdd({ type: "expense" }) },
+          { label: "Ingreso", icon: Plus, run: () => openQuickAdd({ type: "income" }) },
+          { label: "Transferir", icon: ArrowLeftRight, run: () => openQuickAdd({ type: "transfer" }) },
+          { label: "Dictar", icon: Mic, run: () => openQuickAdd({ autoVoice: true }) },
+        ].map((a) => (
+          <button key={a.label} onClick={a.run} className="tap flex flex-col items-center gap-1.5 text-xs font-medium text-ink">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-line bg-surface text-brand">
+              <a.icon size={20} strokeWidth={1.9} />
+            </span>
+            {a.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Fin de mes */}
+      <Link href="/mi-mes/" className="tap card mt-5 block p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-xs text-muted">{ok ? "Llegas a fin de mes con" : "A fin de mes te faltarían"}</div>
+            <Money value={Math.abs(forecast.projectedEnd)} hidden={hide} className={`text-xl font-semibold ${ok ? "text-ink" : "text-neg"}`} />
+          </div>
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${ok ? "bg-brand-soft text-brand" : "bg-neg/10 text-neg"}`}>
+            {ok ? "Vas bien" : "Atención"}
+          </span>
+        </div>
+        {nextBill ? (
+          <div className="mt-3 flex min-w-0 items-center gap-2 border-t border-line pt-3 text-[13px]">
+            <AppIcon icon={nextBill.icon} size={16} className="shrink-0 text-muted" />
+            <span className="min-w-0 flex-1 truncate text-muted">
+              {nextBill.name} · vence {nextBill.due.slice(8, 10)}/{nextBill.due.slice(5, 7)}
+            </span>
+            <Money value={nextBill.amount} hidden={hide} className="shrink-0 font-medium" />
+          </div>
+        ) : (
+          !forecast.bills.length && <div className="mt-3 border-t border-line pt-3 text-[13px] text-muted">Agrega tus gastos fijos para proyectar tu mes.</div>
+        )}
+      </Link>
+
+      {/* Resumen del mes */}
+      <section className="card mt-3 p-4">
+        <div className="grid grid-cols-2 divide-x divide-line">
+          <div className="pr-4">
+            <div className="text-xs text-muted">Ingresos del mes</div>
+            <Money value={month.income} hidden={hide} className="text-base font-semibold text-pos" />
+          </div>
+          <div className="pl-4">
+            <div className="text-xs text-muted">Gastos del mes</div>
+            <Money value={month.expense} hidden={hide} className="text-base font-semibold" />
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[13px]">
+          <span className="text-muted">Ahorro neto</span>
+          <span>
+            <Money value={month.net} hidden={hide} tone className="font-semibold" />
+            {savingsRate !== null && <span className="ml-1.5 text-xs text-muted">({Math.round(savingsRate * 100)}%)</span>}
+          </span>
+        </div>
+      </section>
+
       {insights.length > 0 && (
-        <Section title="Para ti">
-          <div className="-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 no-scrollbar">
+        <Section title="Recomendaciones">
+          <div className="card divide-y divide-line">
             {insights.map((i) => {
-              const tint = i.tone === "warn" ? "from-amber-400/15" : i.tone === "good" ? "from-emerald-400/15" : "from-indigo-400/15";
+              const color = i.tone === "warn" ? "text-warn bg-warn/10" : i.tone === "good" ? "text-pos bg-pos/10" : "text-brand bg-brand-soft";
               const body = (
-                <>
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${tint} to-transparent text-2xl`}>{i.icon}</div>
-                  <div className="mt-3 text-[15px] font-bold leading-snug">{i.title}</div>
-                  <div className="mt-1 text-xs leading-relaxed text-muted">{i.body}</div>
-                </>
+                <div className="flex gap-3 px-4 py-3">
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${color}`}>
+                    <AppIcon icon={i.icon} size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium leading-snug">{i.title}</div>
+                    <div className="mt-0.5 text-xs leading-relaxed text-muted">{i.body}</div>
+                  </div>
+                </div>
               );
               return i.href ? (
-                <Link key={i.id} href={i.href} className="tap card w-[260px] shrink-0 snap-start p-4">
+                <Link key={i.id} href={i.href} className="tap block">
                   {body}
                 </Link>
               ) : (
-                <div key={i.id} className="card w-[260px] shrink-0 snap-start p-4">
-                  {body}
-                </div>
+                <div key={i.id}>{body}</div>
               );
             })}
           </div>
         </Section>
       )}
 
-      <Section title="Cuentas para gastar" action={<Link href="/cuentas/" className="link">Todas</Link>}>
-        <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 no-scrollbar">
-          {accounts.filter((a) => countsForAvailable(a) && !a.linkedAccountId).map((a) => (
-            <Link key={a.id} href={`/movimientos/?account=${a.id}`} className="tap card relative w-[156px] shrink-0 overflow-hidden p-3.5">
-              <div className="absolute inset-x-0 top-0 h-1" style={{ background: a.color }} />
-              <IconBubble icon={a.icon} color={a.color} size={36} />
-              <div className="mt-3 truncate text-[13px] font-medium text-muted">{a.name}</div>
-              <Money value={balances.get(a.id) ?? 0} hidden={hide} currency={a.currency} className={`block text-[17px] font-bold ${(balances.get(a.id) ?? 0) < 0 ? "text-neg" : ""}`} />
-              {a.type === "credit_card" && a.creditLimit ? (
-                <Progress className="mt-2 h-1.5" value={Math.max(0, -(balances.get(a.id) ?? 0)) / a.creditLimit} />
-              ) : null}
-            </Link>
-          ))}
+      <Section title="Cuentas para gastar" action={<Link href="/cuentas/" className="link">Ver todas</Link>}>
+        <div className="card divide-y divide-line">
+          {forSpending.map((a) => {
+            const b = balances.get(a.id) ?? 0;
+            return (
+              <Link key={a.id} href={`/movimientos/?account=${a.id}`} className="tap flex items-center gap-3 px-4 py-3">
+                <IconBubble icon={a.icon} color={a.color} size={36} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium">{a.name}</div>
+                  {a.type === "credit_card" && a.creditLimit ? (
+                    <Progress className="mt-1.5 max-w-[160px]" value={Math.max(0, -b) / a.creditLimit} />
+                  ) : null}
+                </div>
+                <Money value={b} hidden={hide} currency={a.currency} className={`text-sm font-semibold ${b < 0 ? "text-neg" : ""}`} />
+              </Link>
+            );
+          })}
         </div>
       </Section>
 
       {(pos.investments > 0 || pos.receivables > 0 || allAccounts.some((a) => a.type === "investment" || a.type === "receivable")) && (
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-2 gap-3">
           <Link href="/inversiones/" className="tap card p-4">
-            <IconBubble icon="📈" color="#6366f1" size={38} />
-            <div className="mt-3 text-xs font-medium text-muted">Inversiones</div>
-            <Money value={pos.investments} hidden={hide} compact className="text-[17px] font-bold" />
+            <div className="flex items-center gap-2 text-xs text-muted">
+              <AppIcon icon="i:trend" size={15} /> Inversiones
+            </div>
+            <Money value={pos.investments} hidden={hide} compact className="mt-1 block text-base font-semibold" />
           </Link>
           <Link href="/me-deben/" className="tap card p-4">
-            <IconBubble icon="🤝" color="#f59e0b" size={38} />
-            <div className="mt-3 text-xs font-medium text-muted">Me deben</div>
-            <Money value={pos.receivables} hidden={hide} compact className="text-[17px] font-bold" />
+            <div className="flex items-center gap-2 text-xs text-muted">
+              <AppIcon icon="i:handshake" size={15} /> Me deben
+            </div>
+            <Money value={pos.receivables} hidden={hide} compact className="mt-1 block text-base font-semibold" />
           </Link>
         </div>
       )}
 
       <Section title="Evolución" action={<Link href="/reportes/" className="link">Reportes</Link>}>
         <div className="card p-4">
-          <div className="mb-1 flex gap-4 text-xs font-medium text-muted">
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-pos" /> Ingresos</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-neg" /> Gastos</span>
+          <div className="mb-1 flex gap-4 text-xs text-muted">
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-brand" /> Ingresos</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#C7CCD4]" /> Gastos</span>
           </div>
           <IncomeExpenseBars data={series} height={150} showAxis={false} />
         </div>
@@ -251,21 +254,20 @@ export default function Dashboard() {
 
       {budgets.length > 0 && (
         <Section title="Presupuestos" action={<Link href="/presupuestos/" className="link">Gestionar</Link>}>
-          <div className="card divide-y divide-line/60">
+          <div className="card divide-y divide-line">
             {budgets.slice(0, 4).map((b) => {
               const c = catMap.get(b.budget.categoryId);
               return (
-                <div key={b.budget.id} className="flex items-center gap-3 px-4 py-3.5">
-                  <IconBubble icon={c?.icon ?? "❔"} color={c?.color ?? "#94a3b8"} size={38} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2 text-sm">
-                      <span className="truncate font-semibold">{c?.name}</span>
-                      <span className="num shrink-0 text-xs text-muted">
-                        <Money value={b.spent} hidden={hide} className="font-semibold text-ink" /> / <Money value={b.budget.amount} hidden={hide} compact />
-                      </span>
-                    </div>
-                    <Progress className="mt-2" value={b.ratio} />
+                <div key={b.budget.id} className="px-4 py-3">
+                  <div className="flex items-baseline justify-between gap-2 text-sm">
+                    <span className="flex min-w-0 items-center gap-2 truncate font-medium">
+                      <AppIcon icon={c?.icon} size={16} className="shrink-0 text-muted" /> {c?.name}
+                    </span>
+                    <span className="num shrink-0 text-xs text-muted">
+                      <Money value={b.spent} hidden={hide} className="font-medium text-ink" /> de <Money value={b.budget.amount} hidden={hide} compact />
+                    </span>
                   </div>
+                  <Progress className="mt-2" value={b.ratio} />
                 </div>
               );
             })}
@@ -275,26 +277,29 @@ export default function Dashboard() {
 
       <Section title="Metas de ahorro" action={<Link href="/metas/" className="link">{goals.length ? "Ver" : "Crear"}</Link>}>
         {goals.length ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="card divide-y divide-line">
             {goals.slice(0, 4).map((g) => {
               const saved = goalSaved(g.id, s.contributions);
               const pct = Math.min(1, saved / g.targetAmount);
               return (
-                <Link key={g.id} href="/metas/" className="tap card p-4">
-                  <div className="flex items-start justify-between">
-                    <IconBubble icon={g.icon} color={g.color} size={40} />
-                    <Ring value={pct} color={g.color} />
+                <Link key={g.id} href="/metas/" className="tap block px-4 py-3">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="flex min-w-0 items-center gap-2 truncate font-medium">
+                      <AppIcon icon={g.icon} size={16} className="shrink-0 text-muted" /> {g.name}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted">
+                      {Math.round(pct * 100)}% · <Money value={saved} hidden={hide} compact />
+                    </span>
                   </div>
-                  <div className="mt-3 truncate text-sm font-semibold">{g.name}</div>
-                  <div className="num text-xs text-muted"><Money value={saved} hidden={hide} compact /> de <Money value={g.targetAmount} hidden={hide} compact /></div>
+                  <Progress className="mt-2" value={pct} color="rgb(var(--brand))" />
                 </Link>
               );
             })}
           </div>
         ) : (
-          <Link href="/metas/" className="tap card flex items-center gap-3 px-4 py-4 text-sm">
-            <IconBubble icon="🎯" color="#f97316" />
-            <span className="flex-1 font-medium">Crea tu primera meta: viaje, fondo de emergencia, laptop…</span>
+          <Link href="/metas/" className="tap card flex items-center gap-3 px-4 py-3.5 text-sm">
+            <IconBubble icon="i:target" color="#0E5A48" size={36} />
+            <span className="flex-1">Crea tu primera meta: viaje, fondo de emergencia, laptop…</span>
             <ChevronRight size={18} className="text-muted" />
           </Link>
         )}
@@ -302,43 +307,15 @@ export default function Dashboard() {
 
       <Section title="Últimos movimientos" action={<Link href="/movimientos/" className="link">Ver todos</Link>}>
         {txs.length ? (
-          <div className="card divide-y divide-line/60 overflow-hidden">
+          <div className="card divide-y divide-line overflow-hidden">
             {txs.slice(0, 6).map((t) => (
               <TxRow key={t.id} tx={t} categories={catMap} accounts={accMap} hidden={hide} />
             ))}
           </div>
         ) : (
-          <Empty icon="⚡" title="Registra tu primer gasto" body="Toca + , escribe el monto y toca la categoría. Listo." />
+          <Empty icon="i:zap" title="Registra tu primer gasto" body="Toca + , escribe el monto y toca la categoría. Listo." />
         )}
       </Section>
     </div>
-  );
-}
-
-function Flow({ label, value, hide, up }: { label: string; value: number; hide: boolean; up?: boolean }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${up ? "bg-pos/12 text-pos" : "bg-neg/12 text-neg"}`}>
-        {up ? <ArrowDownLeft size={19} strokeWidth={2.4} /> : <ArrowUpRight size={19} strokeWidth={2.4} />}
-      </span>
-      <div className="min-w-0">
-        <div className="text-xs font-medium text-muted">{label}</div>
-        <Money value={value} hidden={hide} compact className="text-[17px] font-bold" />
-      </div>
-    </div>
-  );
-}
-
-function Ring({ value, color }: { value: number; color: string }) {
-  const r = 15;
-  const c = 2 * Math.PI * r;
-  return (
-    <svg width="40" height="40" viewBox="0 0 40 40" className="-rotate-90" aria-label={`${Math.round(value * 100)}%`}>
-      <circle cx="20" cy="20" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-surface-2" />
-      <circle cx="20" cy="20" r={r} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeDasharray={`${c * value} ${c}`} />
-      <text x="20" y="20" textAnchor="middle" dominantBaseline="central" transform="rotate(90 20 20)" className="fill-ink text-[9px] font-bold">
-        {Math.round(value * 100)}%
-      </text>
-    </svg>
   );
 }

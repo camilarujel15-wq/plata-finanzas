@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useState } from "react";
 import { useStore } from "@/lib/store/store";
 import { useUI } from "@/lib/store/ui";
@@ -164,7 +165,7 @@ export function AccountForm({ initial, mode, onClose }: { initial: Partial<Accou
                 .filter((x) => x.id !== a.id && x.type !== "wallet" && x.type !== "credit_card")
                 .map((x) => (
                   <button key={x.id} className={`chip ${a.linkedAccountId === x.id ? "chip-on" : ""}`} onClick={() => setA({ ...a, linkedAccountId: x.id, currency: x.currency })}>
-                    {x.icon} {x.name}
+                    <AppIcon icon={x.icon} size={15} className="shrink-0" /> {x.name}
                   </button>
                 ))}
             </div>
@@ -232,7 +233,7 @@ export function AccountForm({ initial, mode, onClose }: { initial: Partial<Accou
               <button className={`chip ${!lentFrom ? "chip-on" : ""}`} onClick={() => setLentFrom("")}>No (p. ej. pagué su parte)</button>
               {spendable.filter((x) => x.currency === cur).map((x) => (
                 <button key={x.id} className={`chip ${lentFrom === x.id ? "chip-on" : ""}`} onClick={() => setLentFrom(x.id)}>
-                  {x.icon} {x.name}
+                  <AppIcon icon={x.icon} size={15} className="shrink-0" /> {x.name}
                 </button>
               ))}
             </div>

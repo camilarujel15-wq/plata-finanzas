@@ -16,14 +16,9 @@ export function haptic(kind: "tap" | "success" | "warn" = "tap") {
   }
 }
 
-/** Barra de estado acorde al tema del sistema. */
+/** Barra de estado siempre clara (la app no tiene modo oscuro). */
 export function syncStatusBar() {
   if (!isNative()) return;
-  const apply = () => {
-    const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    StatusBar.setBackgroundColor({ color: dark ? "#070B14" : "#F4F6F9" }).catch(() => {});
-    StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light }).catch(() => {});
-  };
-  apply();
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply);
+  StatusBar.setBackgroundColor({ color: "#F6F7F9" }).catch(() => {});
+  StatusBar.setStyle({ style: Style.Light }).catch(() => {});
 }

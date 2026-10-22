@@ -29,18 +29,18 @@ export function TxRow({
   return (
     <button onClick={() => open({ editId: tx.id })} className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-surface-2">
       {isTransfer ? (
-        <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] bg-surface-2 text-muted">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted">
           <ArrowLeftRight size={18} />
         </span>
       ) : (
-        <IconBubble icon={cat?.icon ?? "❔"} color={cat?.color ?? "#94a3b8"} />
+        <IconBubble icon={cat?.icon ?? "i:help"} color={cat?.color ?? "#94a3b8"} />
       )}
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-semibold">{title}</div>
         <div className="truncate text-xs text-muted">
           {sub}
           {tx.tags.length > 0 && <span className="ml-1 text-brand">{tx.tags.map((t) => `#${t}`).join(" ")}</span>}
-          {tx.source !== "manual" && <span className="ml-1 opacity-70">· {tx.source === "voice" ? "🎙️" : tx.source === "import" ? "📥" : tx.source === "text" ? "✨" : tx.source === "widget" ? "📲" : "📷"}</span>}
+          {tx.source !== "manual" && <span className="ml-1 opacity-70">· {{ voice: "voz", import: "importado", text: "texto", widget: "widget", ocr: "foto", manual: "" }[tx.source]}</span>}
         </div>
       </div>
       <Money
@@ -48,7 +48,7 @@ export function TxRow({
         sign={tx.type === "income"}
         hidden={hidden}
         currency={acc?.currency}
-        className={`text-[15px] font-bold ${tx.type === "income" ? "text-pos" : isTransfer ? "text-muted" : ""}`}
+        className={`text-[15px] font-semibold ${tx.type === "income" ? "text-pos" : isTransfer ? "text-muted" : ""}`}
       />
     </button>
   );

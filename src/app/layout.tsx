@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource-variable/inter";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 
@@ -18,15 +18,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f6f9" },
-    { media: "(prefers-color-scheme: dark)", color: "#070b14" },
-  ],
+  themeColor: "#f6f7f9",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" data-theme="light" style={{ colorScheme: "light" }}>
       <body className="font-sans">
         <Suspense>
           <AppShell>{children}</AppShell>

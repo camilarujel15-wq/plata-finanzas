@@ -4,7 +4,7 @@ const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
-  darkMode: "media",
+  darkMode: "class", // la app es siempre clara
   theme: {
     extend: {
       colors: {
@@ -16,6 +16,7 @@ const config: Config = {
         muted: token("muted"),
         brand: token("brand"),
         "brand-strong": token("brand-strong"),
+        "brand-soft": token("brand-soft"),
         "brand-ink": token("brand-ink"),
         pos: token("pos"),
         neg: token("neg"),
@@ -24,9 +25,9 @@ const config: Config = {
       fontFamily: { sans: ["var(--font-sans)"] },
       opacity: { 7: "0.07", 8: "0.08", 12: "0.12", 65: "0.65" },
       boxShadow: {
-        card: "0 1px 2px rgb(var(--shadow) / .04), 0 10px 28px -14px rgb(var(--shadow) / .12)",
-        float: "0 12px 40px -12px rgb(var(--shadow) / .28)",
-        glow: "0 10px 24px -10px rgba(16,185,129,.55)",
+        card: "0 1px 2px rgb(var(--shadow) / .05)",
+        float: "0 8px 30px -8px rgb(var(--shadow) / .18)",
+        glow: "none",
       },
       keyframes: {
         "sheet-up": { from: { transform: "translateY(100%)" }, to: { transform: "translateY(0)" } },
@@ -40,7 +41,7 @@ const config: Config = {
         "fade-in": "fade-in .18s ease-out",
         pop: "pop .22s cubic-bezier(.2,.9,.25,1)",
         shake: "shake .3s ease-in-out",
-        rise: "rise .35s cubic-bezier(.2,.9,.25,1) both",
+        rise: "fade-in .2s ease-out both",
       },
     },
   },

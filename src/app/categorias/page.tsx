@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store/store";
@@ -46,7 +47,7 @@ export default function Categorias() {
               return (
                 <div key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                   <span className="min-w-0 flex-1 truncate">“{r.pattern}”</span>
-                  <span className="shrink-0 text-muted">→ {c?.icon} {c?.name}</span>
+                  <span className="shrink-0 text-muted">→ {c?.name}</span>
                   <span className="num w-8 text-right text-xs text-muted">×{r.hits}</span>
                   <button aria-label="Olvidar regla" className="tap text-muted" onClick={() => s.deleteRule(r.id)}>
                     <Trash2 size={14} />
@@ -69,7 +70,7 @@ export default function Categorias() {
 
 function CategoryForm({ initial, onClose }: { initial: Partial<Category>; onClose: () => void }) {
   const s = useStore();
-  const [c, setC] = useState<Partial<Category>>({ icon: "🏷️", color: PALETTE[9], ...initial });
+  const [c, setC] = useState<Partial<Category>>({ icon: "i:tag", color: PALETTE[9], ...initial });
   return (
     <Sheet
       open

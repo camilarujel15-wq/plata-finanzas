@@ -39,7 +39,7 @@ export default function Cuentas() {
       {/* Resumen completo: aquí sí se ve todo tu dinero */}
       <section className="card p-4">
         <div className="text-xs font-medium text-muted">Disponible para gastar</div>
-        <Money value={pos.available} hidden={hide} className="text-[28px] font-extrabold tracking-tight" />
+        <Money value={pos.available} hidden={hide} className="text-[28px] font-semibold tracking-tight" />
         <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line/70 pt-3 text-sm">
           <Row label="Cuentas para gastar" value={pos.spendable} hide={hide} />
           <Row label="Ahorros y otras" value={pos.assets - pos.spendable} hide={hide} />
@@ -50,7 +50,7 @@ export default function Cuentas() {
         </div>
         <div className="mt-3 flex items-baseline justify-between rounded-2xl bg-surface-2 px-3 py-2.5">
           <span className="text-xs font-semibold text-muted">Patrimonio neto</span>
-          <Money value={pos.netWorth} hidden={hide} className="text-lg font-bold" />
+          <Money value={pos.netWorth} hidden={hide} className="text-lg font-semibold" />
         </div>
       </section>
 
@@ -90,8 +90,8 @@ export default function Cuentas() {
                         </div>
                       </button>
                       <Link href={`/movimientos/?account=${a.id}`} className="text-right">
-                        <Money value={b} hidden={hide} currency={a.currency} className={`font-bold ${b < 0 ? "text-neg" : linked ? "text-muted" : ""}`} />
-                        <div className="text-[11px] font-medium text-brand-strong">Movimientos</div>
+                        <Money value={b} hidden={hide} currency={a.currency} className={`font-semibold ${b < 0 ? "text-neg" : linked ? "text-muted" : ""}`} />
+                        <div className="text-[11px] font-medium text-brand">Movimientos</div>
                       </Link>
                     </div>
                     {a.type === "credit_card" && a.creditLimit ? (
@@ -158,7 +158,7 @@ function Row({ label, value, hide, neg }: { label: string; value: number; hide: 
   return (
     <div>
       <div className="text-[11px] font-medium text-muted">{label}</div>
-      <Money value={value} hidden={hide} compact className={`font-bold ${neg && value < 0 ? "text-neg" : ""}`} />
+      <Money value={value} hidden={hide} compact className={`font-semibold ${neg && value < 0 ? "text-neg" : ""}`} />
     </div>
   );
 }

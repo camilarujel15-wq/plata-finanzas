@@ -38,8 +38,8 @@ export default function MeDeben() {
       />
 
       <section className="hero p-5">
-        <div className="text-[11px] font-semibold tracking-wide text-amber-200">TE DEBEN EN TOTAL</div>
-        <Money value={pos.receivables} hidden={hide} className="mt-2 block text-[34px] font-extrabold leading-none" />
+        <div className="text-[13px] text-white/75">Te deben en total</div>
+        <Money value={pos.receivables} hidden={hide} className="mt-2 block text-[34px] font-semibold leading-none" />
         <p className="mt-3 text-xs text-white/60">
           {pending.length} {pending.length === 1 ? "persona" : "personas"} · Cuenta en tu patrimonio, no en tu disponible.
         </p>
@@ -48,7 +48,7 @@ export default function MeDeben() {
       {!people.length && (
         <div className="mt-4">
           <Empty
-            icon="🤝"
+            icon="i:handshake"
             title="¿Alguien te debe dinero?"
             body="Registra a quién le prestaste o por quién pagaste. Cuando te pague, toca “Me pagó” y el dinero vuelve a tu cuenta."
             action={<button className="btn-primary" onClick={() => setEditing({})}>Registrar deuda</button>}
@@ -65,7 +65,7 @@ export default function MeDeben() {
               <Link href={`/me-deben/detalle/?id=${a.id}`} className="flex w-full items-center gap-3 text-left">
                 <IconBubble icon={a.icon} color={a.color} size={46} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-bold">{a.name}</div>
+                  <div className="truncate font-semibold">{a.name}</div>
                   <div className="truncate text-xs text-muted">{a.note || "Sin concepto"}</div>
                   {a.dueDate && (
                     <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${overdue ? "bg-neg/12 text-neg" : "bg-surface-2 text-muted"}`}>
@@ -74,8 +74,8 @@ export default function MeDeben() {
                   )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <Money value={owed} hidden={hide} currency={a.currency} className="text-lg font-extrabold" />
-                  <div className="text-[11px] font-semibold text-brand-strong">Ver historial ›</div>
+                  <Money value={owed} hidden={hide} currency={a.currency} className="text-lg font-semibold" />
+                  <div className="text-[11px] font-semibold text-brand">Ver historial ›</div>
                 </div>
               </Link>
               <div className="mt-3 grid grid-cols-2 gap-2">
@@ -101,7 +101,7 @@ export default function MeDeben() {
                   {a.name}
                   {a.note && <span className="text-xs text-muted"> · {a.note}</span>}
                 </span>
-                <span className="text-xs font-semibold text-pos">{a.archived ? "🗄️ Archivada" : "✓ Saldado"}</span>
+                <span className="text-xs font-semibold text-pos">{a.archived ? "Archivada" : "Saldado"}</span>
               </Link>
             ))}
           </div>

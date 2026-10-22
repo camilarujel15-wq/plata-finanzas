@@ -38,7 +38,7 @@ export default function Reportes() {
     return (
       <div>
         <PageHeader title="Reportes" />
-        <Empty icon="📊" title="Aún no hay datos" body="Registra movimientos o importa tu extracto para ver tus reportes." action={<Link className="btn-primary" href="/importar">Importar extracto</Link>} />
+        <Empty icon="i:chart" title="Aún no hay datos" body="Registra movimientos o importa tu extracto para ver tus reportes." action={<Link className="btn-primary" href="/importar">Importar extracto</Link>} />
       </div>
     );
   }

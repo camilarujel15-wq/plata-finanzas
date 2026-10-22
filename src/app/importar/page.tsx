@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
@@ -173,7 +174,7 @@ export default function Importar() {
             <label className="label">Cuenta destino (si el archivo no la indica)</label>
             <select className="input" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
               {accounts.map((a) => (
-                <option key={a.id} value={a.id}>{a.icon} {a.name} ({a.currency === "USD" ? "US$" : "S/"})</option>
+                <option key={a.id} value={a.id}>{a.name} ({a.currency === "USD" ? "US$" : "S/"})</option>
               ))}
             </select>
           </div>
@@ -187,9 +188,9 @@ export default function Importar() {
       {step === 3 && (
         <div>
           <div className="card grid grid-cols-3 gap-2 p-3 text-center text-xs">
-            <div><div className="num text-lg font-bold">{included.length}</div>a importar</div>
-            <div><div className="num text-lg font-bold text-warn">{rows.filter((r) => r.duplicate).length}</div>duplicados</div>
-            <div><div className="num text-lg font-bold">{uncategorized}</div>sin categoría</div>
+            <div><div className="num text-lg font-semibold">{included.length}</div>a importar</div>
+            <div><div className="num text-lg font-semibold text-warn">{rows.filter((r) => r.duplicate).length}</div>duplicados</div>
+            <div><div className="num text-lg font-semibold">{uncategorized}</div>sin categoría</div>
           </div>
           {skipped > 0 && <p className="mt-2 px-1 text-xs text-muted">{skipped} filas ignoradas (sin fecha o monto válido).</p>}
           <div className="mt-3 card divide-y divide-line/60">
@@ -200,7 +201,7 @@ export default function Importar() {
                   <button
                     aria-label={r.include ? "Excluir" : "Incluir"}
                     onClick={() => setRows(rows.map((x, j) => (j === i ? { ...x, include: !x.include } : x)))}
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${r.include ? "border-brand bg-brand text-brand-ink" : "border-line"}`}
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${r.include ? "border-brand bg-brand text-white" : "border-line"}`}
                   >
                     {r.include && <Check size={14} />}
                   </button>
@@ -209,7 +210,7 @@ export default function Importar() {
                     <div className="flex items-center gap-1 text-[11px] text-muted">
                       {r.date}
                       {r.duplicate && <span className="rounded bg-warn/15 px-1 text-warn">posible duplicado</span>}
-                      {r.confidence > 0 && r.confidence < 1 && <span className="text-brand">✨ auto</span>}
+                      {r.confidence > 0 && r.confidence < 1 && <span className="text-brand">· sugerida</span>}
                     </div>
                     <select
                       className="mt-1 w-full rounded-lg border border-line bg-surface px-2 py-1 text-xs"
@@ -218,7 +219,7 @@ export default function Importar() {
                     >
                       <option value="">Sin categoría</option>
                       {opts.map((c) => (
-                        <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
                   </div>

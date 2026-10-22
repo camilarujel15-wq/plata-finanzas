@@ -8,6 +8,7 @@ import { useUI } from "@/lib/store/ui";
 import { useBalances, useTransactions } from "@/lib/store/selectors";
 import { Empty, IconBubble, PageHeader } from "@/components/ui/bits";
 import { Money } from "@/components/ui/Money";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { AccountForm } from "@/components/accounts/AccountForm";
 import { dayLabel, daysBetween, today } from "@/lib/domain/dates";
 
@@ -74,7 +75,7 @@ export default function DetalleDeuda() {
     return (
       <div>
         <PageHeader title="Me deben" back="/me-deben/" />
-        <Empty icon="🤷" title="No encontramos a esta persona" />
+        <Empty icon="i:search" title="No encontramos a esta persona" />
       </div>
     );
   }
@@ -98,26 +99,26 @@ export default function DetalleDeuda() {
 
       <section className="hero p-5">
         <div className="flex items-center gap-3">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-2xl">{person.icon}</span>
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15"><AppIcon icon={person.icon} size={20} /></span>
           <div className="min-w-0">
-            <div className="text-[11px] font-semibold tracking-wide text-amber-200">{owed > 0 ? "AÚN TE DEBE" : "SALDADO"}</div>
-            <Money value={Math.max(0, owed)} hidden={hide} currency={person.currency} className="block text-[32px] font-extrabold leading-none" />
+            <div className="text-[13px] text-white/75">{owed > 0 ? "Aún te debe" : "Saldado"}</div>
+            <Money value={Math.max(0, owed)} hidden={hide} currency={person.currency} className="block text-[32px] font-semibold leading-none" />
           </div>
         </div>
         {person.note && <p className="mt-3 text-sm text-white/70">{person.note}</p>}
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-          <div className="rounded-2xl bg-white/[0.07] px-3 py-2.5 ring-1 ring-white/[0.08]">
+          <div className="rounded-xl bg-white/10 px-3 py-2.5">
             <div className="text-white/55">Le prestaste</div>
-            <Money value={lent} hidden={hide} currency={person.currency} className="text-[15px] font-bold" />
+            <Money value={lent} hidden={hide} currency={person.currency} className="text-[15px] font-semibold" />
           </div>
-          <div className="rounded-2xl bg-white/[0.07] px-3 py-2.5 ring-1 ring-white/[0.08]">
+          <div className="rounded-xl bg-white/10 px-3 py-2.5">
             <div className="text-white/55">Te devolvió</div>
-            <Money value={repaid} hidden={hide} currency={person.currency} className="text-[15px] font-bold text-emerald-200" />
+            <Money value={repaid} hidden={hide} currency={person.currency} className="text-[15px] font-semibold text-white" />
           </div>
         </div>
         {person.dueDate && owed > 0 && (
-          <div className={`mt-3 rounded-2xl px-3 py-2 text-xs font-semibold ${overdue ? "bg-rose-400/15 text-rose-200" : "bg-white/[0.07] text-white/70"}`}>
-            {overdue ? `⚠️ Venció hace ${daysBetween(person.dueDate, today())} días` : `📅 Prometió pagar ${dayLabel(person.dueDate).toLowerCase()}`}
+          <div className={`mt-3 rounded-2xl px-3 py-2 text-xs font-semibold ${overdue ? "bg-white/15 text-white" : "bg-white/10 text-white/75"}`}>
+            {overdue ? `Venció hace ${daysBetween(person.dueDate, today())} días` : `Prometió pagar ${dayLabel(person.dueDate).toLowerCase()}`}
           </div>
         )}
       </section>
@@ -131,9 +132,9 @@ export default function DetalleDeuda() {
         </button>
       </div>
 
-      <h2 className="mb-3 mt-7 px-1 text-[17px] font-bold tracking-tight">Historial</h2>
+      <h2 className="mb-3 mt-7 px-1 text-[17px] font-semibold tracking-tight">Historial</h2>
       {items.length === 0 ? (
-        <Empty icon="📜" title="Sin movimientos" body="Los préstamos y devoluciones aparecerán aquí." />
+        <Empty icon="i:receipt" title="Sin movimientos" body="Los préstamos y devoluciones aparecerán aquí." />
       ) : (
         <div className="card divide-y divide-line/60 overflow-hidden">
           {items.map((i) => (
@@ -143,7 +144,7 @@ export default function DetalleDeuda() {
               onClick={() => i.txId && openQuickAdd({ editId: i.txId })}
               className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-surface-2"
             >
-              <span className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] ${i.amount > 0 ? "bg-warn/12 text-warn" : "bg-pos/12 text-pos"}`}>
+              <span className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full ${i.amount > 0 ? "bg-warn/12 text-warn" : "bg-pos/12 text-pos"}`}>
                 {i.amount > 0 ? <ArrowUpRight size={19} strokeWidth={2.4} /> : <ArrowDownLeft size={19} strokeWidth={2.4} />}
               </span>
               <div className="min-w-0 flex-1">
@@ -153,7 +154,7 @@ export default function DetalleDeuda() {
                 </div>
               </div>
               <div className="text-right">
-                <Money value={i.amount} sign hidden={hide} currency={person.currency} className={`text-[15px] font-bold ${i.amount < 0 ? "text-pos" : ""}`} />
+                <Money value={i.amount} sign hidden={hide} currency={person.currency} className={`text-[15px] font-semibold ${i.amount < 0 ? "text-pos" : ""}`} />
                 <div className="text-[11px] text-muted">
                   Debe <Money value={i.balance} hidden={hide} currency={person.currency} />
                 </div>

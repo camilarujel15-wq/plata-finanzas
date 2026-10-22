@@ -1,10 +1,11 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { useStore } from "@/lib/store/store";
 import { useSpendableAccounts } from "@/lib/store/selectors";
-import { PageHeader, Progress, Empty, EmojiPicker, SwatchPicker } from "@/components/ui/bits";
+import { PageHeader, Progress, Empty, EmojiPicker, SwatchPicker, IconBubble } from "@/components/ui/bits";
 import { Money, useFormat } from "@/components/ui/Money";
 import { MoneyInput } from "@/components/ui/MoneyInput";
 import { Sheet } from "@/components/ui/Sheet";
@@ -36,7 +37,7 @@ export default function Metas() {
         Lo que apartas para una meta se descuenta de tu <b>Disponible real</b>, aunque el dinero siga en tu cuenta. Así no lo gastas por accidente.
       </p>
 
-      {!goals.length && <Empty icon="🎯" title="Sin metas aún" body="Un viaje, un fondo de emergencia o una laptop. Ponle monto y fecha." action={<button className="btn-primary" onClick={() => setEditing({})}>Crear meta</button>} />}
+      {!goals.length && <Empty icon="i:target" title="Sin metas aún" body="Un viaje, un fondo de emergencia o una laptop. Ponle monto y fecha." action={<button className="btn-primary" onClick={() => setEditing({})}>Crear meta</button>} />}
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
         {goals.map((g) => {
@@ -48,14 +49,14 @@ export default function Metas() {
           return (
             <div key={g.id} className="card p-4">
               <button className="flex w-full items-start gap-3 text-left" onClick={() => setEditing(g)}>
-                <span className="text-3xl">{g.icon}</span>
+                <IconBubble icon={g.icon} color={g.color} size={42} />
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold">{g.name}</div>
                   <div className="text-xs text-muted">
                     {g.targetDate ? (daysLeft! > 0 ? `${daysLeft} días · hasta ${dayLabel(g.targetDate)}` : "Fecha cumplida") : "Sin fecha límite"}
                   </div>
                 </div>
-                <div className="num text-right text-lg font-bold" style={{ color: g.color }}>
+                <div className="num text-right text-lg font-semibold" style={{ color: g.color }}>
                   {Math.round(pct * 100)}%
                 </div>
               </button>
@@ -67,7 +68,7 @@ export default function Metas() {
                 </span>
               </div>
               {monthly !== null && monthly > 0 && <div className="mt-1 text-xs text-muted">Aparta {fmt(monthly)} al mes para llegar a tiempo.</div>}
-              {pct >= 1 && <div className="mt-1 text-xs font-medium text-pos">🎉 ¡Meta cumplida!</div>}
+              {pct >= 1 && <div className="mt-1 text-xs font-medium text-pos">Meta cumplida</div>}
               <div className="mt-3 flex gap-2">
                 <button className="btn-primary flex-1 py-2.5" onClick={() => setContrib({ goal: g, sign: 1 })}>
                   <Plus size={16} /> Aportar
@@ -85,7 +86,7 @@ export default function Metas() {
                         <span className="text-xs text-muted">{dayLabel(c.date)} {c.note && `· ${c.note}`}</span>
                         <span className="flex items-center gap-2">
                           <Money value={c.amount} sign tone hidden={hide} className="text-sm" />
-                          <button className="text-xs text-muted" onClick={() => s.deleteContribution(c.id)} aria-label="Eliminar aporte">✕</button>
+                          <button className="text-xs text-muted" onClick={() => s.deleteContribution(c.id)} aria-label="Eliminar aporte">Quitar</button>
                         </span>
                       </li>
                     ))}
@@ -107,7 +108,7 @@ function GoalForm({ initial, onClose }: { initial: Partial<Goal>; onClose: () =>
   const s = useStore();
   const accounts = useSpendableAccounts();
   const firstSavings = accounts.find((a) => a.type === "savings")?.id ?? null;
-  const [g, setG] = useState<Partial<Goal>>({ icon: "🎯", color: PALETTE[4], accountId: initial.id ? null : firstSavings, ...initial });
+  const [g, setG] = useState<Partial<Goal>>({ icon: "i:target", color: PALETTE[4], accountId: initial.id ? null : firstSavings, ...initial });
   const ok = g.name?.trim() && g.targetAmount && g.targetAmount > 0;
   return (
     <Sheet
@@ -147,7 +148,7 @@ function GoalForm({ initial, onClose }: { initial: Partial<Goal>; onClose: () =>
           <div className="flex flex-wrap gap-2">
             {accounts.filter((a) => !a.linkedAccountId).map((a) => (
               <button key={a.id} className={`chip ${g.accountId === a.id ? "chip-on" : ""}`} onClick={() => setG({ ...g, accountId: a.id })}>
-                {a.icon} {a.name}
+                <AppIcon icon={a.icon} size={15} className="shrink-0" /> {a.name}
               </button>
             ))}
             <button className={`chip ${!g.accountId ? "chip-on" : ""}`} onClick={() => setG({ ...g, accountId: null })}>

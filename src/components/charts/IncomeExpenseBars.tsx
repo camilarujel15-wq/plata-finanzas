@@ -23,8 +23,8 @@ export function IncomeExpenseBars({ data, height = 180, showAxis = true }: { dat
           contentStyle={{ background: c.surface, border: `1px solid ${c.line}`, borderRadius: 12, fontSize: 12, color: c.ink }}
           formatter={(v: number, name) => [fmt(Math.round(v * 100)), name === "income" ? "Ingresos" : "Gastos"]}
         />
-        <Bar isAnimationActive={false} dataKey="income" fill={c.pos} radius={[4, 4, 0, 0]} maxBarSize={18} />
-        <Bar isAnimationActive={false} dataKey="expense" fill={c.neg} fillOpacity={0.85} radius={[4, 4, 0, 0]} maxBarSize={18} />
+        <Bar isAnimationActive={false} dataKey="income" fill={c.brand} radius={[3, 3, 0, 0]} maxBarSize={14} />
+        <Bar isAnimationActive={false} dataKey="expense" fill="#C7CCD4" radius={[3, 3, 0, 0]} maxBarSize={14} />
       </BarChart>
     </ResponsiveContainer>
   );

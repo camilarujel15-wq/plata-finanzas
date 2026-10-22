@@ -7,16 +7,16 @@ import { useStore } from "@/lib/store/store";
 import { isCloudEnabled } from "@/lib/sync/supabase";
 
 const items = [
-  { href: "/mi-mes/", icon: "🗓️", color: "#10b981", title: "Mi mes", body: "¿Llego a fin de mes? Pagos, tarjetas y consejos" },
-  { href: "/gastos-fijos/", icon: "🧾", color: "#0ea5e9", title: "Gastos fijos", body: "Alquiler, luz, internet, cuotas, sueldo" },
-  { href: "/cuentas/", icon: "🏦", color: "#2563eb", title: "Cuentas", body: "Bancos, ahorros, tarjetas, wallets y efectivo" },
-  { href: "/inversiones/", icon: "📈", color: "#6366f1", title: "Inversiones", body: "Terreno en cuotas, cursos, fondos, negocio" },
-  { href: "/me-deben/", icon: "🤝", color: "#f59e0b", title: "Me deben", body: "Quién te debe, cuánto y cuándo paga" },
-  { href: "/metas/", icon: "🎯", color: "#f97316", title: "Metas de ahorro", body: "Objetivos, fechas y aportes" },
-  { href: "/presupuestos/", icon: "📊", color: "#8b5cf6", title: "Presupuestos", body: "Límites mensuales con alertas 50/80/100%" },
-  { href: "/categorias/", icon: "🏷️", color: "#ec4899", title: "Categorías y reglas", body: "Personaliza y revisa lo que la app aprendió" },
-  { href: "/importar/", icon: "📥", color: "#0891b2", title: "Importar extracto o Notion", body: "CSV del banco o exportación de Notion" },
-  { href: "/ajustes/", icon: "☁️", color: "#10b981", title: "Respaldo, widget y ajustes", body: "Nube, widget de inicio, exportar, privacidad" },
+  { href: "/mi-mes/", icon: "i:calendar", color: "#0E5A48", title: "Mi mes", body: "¿Llego a fin de mes? Pagos, tarjetas y consejos" },
+  { href: "/gastos-fijos/", icon: "i:receipt", color: "#0E5A48", title: "Gastos fijos", body: "Alquiler, luz, internet, cuotas, sueldo" },
+  { href: "/cuentas/", icon: "i:bank", color: "#0E5A48", title: "Cuentas", body: "Bancos, ahorros, tarjetas, wallets y efectivo" },
+  { href: "/inversiones/", icon: "i:trend", color: "#0E5A48", title: "Inversiones", body: "Terreno en cuotas, cursos, fondos, negocio" },
+  { href: "/me-deben/", icon: "i:handshake", color: "#0E5A48", title: "Me deben", body: "Quién te debe, cuánto y cuándo paga" },
+  { href: "/metas/", icon: "i:target", color: "#0E5A48", title: "Metas de ahorro", body: "Objetivos, fechas y aportes" },
+  { href: "/presupuestos/", icon: "i:chart", color: "#0E5A48", title: "Presupuestos", body: "Límites mensuales con alertas 50/80/100%" },
+  { href: "/categorias/", icon: "i:tag", color: "#0E5A48", title: "Categorías y reglas", body: "Personaliza y revisa lo que la app aprendió" },
+  { href: "/importar/", icon: "i:inbox", color: "#0E5A48", title: "Importar extracto o Notion", body: "CSV del banco o exportación de Notion" },
+  { href: "/ajustes/", icon: "i:shield", color: "#0E5A48", title: "Respaldo, widget y ajustes", body: "Nube, widget de inicio, exportar, privacidad" },
 ];
 
 export default function Mas() {

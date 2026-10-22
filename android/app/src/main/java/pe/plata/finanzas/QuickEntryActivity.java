@@ -68,16 +68,16 @@ public class QuickEntryActivity extends Activity {
         w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
-        boolean dark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-        cBg = dark ? 0xFF0F1522 : 0xFFFFFFFF;
-        cSurface2 = dark ? 0xFF1A2335 : 0xFFF2F4F7;
-        cInk = dark ? 0xFFEEF1F6 : 0xFF0B1220;
-        cMuted = dark ? 0xFF94A0B4 : 0xFF667085;
-        cLine = dark ? 0xFF243047 : 0xFFE4E7EC;
-        cBrand = 0xFF10B981;
-        cBrandInk = 0xFF04140D;
-        cNeg = dark ? 0xFFF97066 : 0xFFE5484D;
-        cPos = dark ? 0xFF4ADE80 : 0xFF12B76A;
+        // Siempre claro, con el mismo sistema visual de la app.
+        cBg = 0xFFFFFFFF;
+        cSurface2 = 0xFFF2F4F6;
+        cInk = 0xFF111827;
+        cMuted = 0xFF6B7280;
+        cLine = 0xFFE5E7EB;
+        cBrand = 0xFF0E5A48;
+        cBrandInk = 0xFFFFFFFF;
+        cNeg = 0xFFB93838;
+        cPos = 0xFF0D7A55;
 
         snap = WidgetStore.snapshot(this);
         categoryId = getIntent().getStringExtra(EXTRA_CATEGORY);
@@ -139,9 +139,9 @@ public class QuickEntryActivity extends Activity {
         // Encabezado: emoji + título + tipo
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        emojiView = text("🏷️", 22, cInk, false);
+        emojiView = text("G", 18, cBrand, true);
         emojiView.setGravity(Gravity.CENTER);
-        emojiView.setBackground(round(cSurface2, dp(14)));
+        emojiView.setBackground(round(0xFFE8F1EE, dp(22)));
         header.addView(emojiView, new LinearLayout.LayoutParams(dp(44), dp(44)));
         titleView = text("Nuevo gasto", 17, cInk, true);
         titleView.setPadding(dp(12), 0, 0, 0);
@@ -177,9 +177,9 @@ public class QuickEntryActivity extends Activity {
         keypad.setColumnCount(3);
         String[] keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"};
         for (String k : keys) {
-            TextView key = text(k, 24, cInk, true);
+            TextView key = text(k, 24, cInk, false);
             key.setGravity(Gravity.CENTER);
-            key.setBackground(round(cSurface2, dp(16)));
+            key.setBackground(round(cBg, dp(28)));
             key.setOnClickListener(v -> {
                 v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                 press(k);
@@ -223,7 +223,8 @@ public class QuickEntryActivity extends Activity {
         JSONArray cats = snap.optJSONArray(expense ? "categories" : "incomeCategories");
         if (categoryId != null && findById(cats, categoryId) == null) categoryId = null;
         JSONObject cat = findById(cats, categoryId);
-        emojiView.setText(cat != null ? cat.optString("icon") : (expense ? "💸" : "💰"));
+        String label = cat != null ? cat.optString("name", "?") : (expense ? "G" : "I");
+        emojiView.setText(label.isEmpty() ? "?" : label.substring(0, 1).toUpperCase());
         titleView.setText(cat != null ? cat.optString("name") : (expense ? "Nuevo gasto" : "Nuevo ingreso"));
 
         fillChips(accountRow, snap.optJSONArray("accounts"), accountId, id -> { accountId = id; refresh(); });
@@ -243,9 +244,9 @@ public class QuickEntryActivity extends Activity {
             if (it == null) continue;
             String id = it.optString("id");
             boolean on = id.equals(selected);
-            TextView chip = text(it.optString("icon", "") + "  " + it.optString("name", ""), 14, cInk, on);
+            TextView chip = text(it.optString("name", ""), 14, on ? cBrand : cInk, on);
             chip.setPadding(dp(14), dp(9), dp(14), dp(9));
-            GradientDrawable d = round(on ? (cBrand & 0x00FFFFFF) | 0x26000000 : cBg, dp(20));
+            GradientDrawable d = round(on ? 0xFFE8F1EE : cBg, dp(20));
             d.setStroke(dp(1), on ? cBrand : cLine);
             chip.setBackground(d);
             chip.setOnClickListener(v -> onPick.pick(id));
@@ -382,8 +383,9 @@ public class QuickEntryActivity extends Activity {
     private TextView button(String s) {
         TextView b = text(s, 16, cBrandInk, true);
         b.setGravity(Gravity.CENTER);
-        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0xFF34D399, 0xFF10B981});
-        d.setCornerRadius(dp(18));
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(cBrand);
+        d.setCornerRadius(dp(12));
         b.setBackground(d);
         b.setPadding(0, dp(16), 0, dp(16));
         return b;

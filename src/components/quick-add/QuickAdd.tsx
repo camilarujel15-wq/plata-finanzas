@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, CalendarDays, Check, Delete, Mic, Sparkles, StickyNote, Trash2 } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
@@ -302,7 +303,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
             type="button"
             aria-label={speech.listening ? "Detener dictado" : "Dictar"}
             onClick={() => (speech.listening ? speech.stop() : speech.start())}
-            className={`tap flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${speech.listening ? "animate-pulse bg-neg text-white" : "bg-gradient-to-br from-emerald-300 to-emerald-500 text-brand-ink shadow-glow"}`}
+            className={`tap flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${speech.listening ? "animate-pulse bg-neg text-white" : "bg-brand text-white"}`}
           >
             <Mic size={19} />
           </button>
@@ -310,18 +311,18 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Monto: protagonista */}
-      <div className={`mt-3 flex flex-col items-center ${shake ? "animate-shake" : ""}`}>
+      <div className={`mt-2 flex flex-col items-center ${shake ? "animate-shake" : ""}`}>
         <div className="flex h-4 items-center gap-1.5 text-xs font-semibold text-muted">
           {selectedCat ? (
             <>
-              <span className="text-sm">{selectedCat.icon}</span> {selectedCat.name} · {dayLabel(date)}
+              <AppIcon icon={selectedCat.icon} size={14} /> {selectedCat.name} · {dayLabel(date)}
             </>
           ) : (
             dayLabel(date)
           )}
         </div>
-        <div className={`num mt-1 flex items-start text-[48px] font-extrabold leading-none tracking-tight ${type === "income" ? "text-pos" : ""} ${shake ? "text-neg" : ""}`}>
-          <span className="mr-1.5 mt-1.5 text-2xl font-bold text-muted">{symbol(currency)}</span>
+        <div className={`num mt-1 flex items-start text-[42px] font-semibold leading-none tracking-tight ${type === "income" ? "text-pos" : ""} ${shake ? "text-neg" : ""}`}>
+          <span className="mr-1.5 mt-1.5 text-2xl font-semibold text-muted">{symbol(currency)}</span>
           {digits || "0"}
         </div>
         {note && type !== "transfer" && <div className="mt-2 max-w-full truncate rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">{note}</div>}
@@ -336,7 +337,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
             applyText(text, "text", true);
           }}
         >
-          <Sparkles size={16} className="shrink-0 text-brand-strong" />
+          <Sparkles size={16} className="shrink-0 text-brand" />
           <input
             ref={textRef}
             autoFocus={!qa.text}
@@ -347,7 +348,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
             enterKeyHint="done"
             aria-label="Registro por texto"
           />
-          <button className="tap rounded-xl bg-ink px-3 py-2 text-xs font-bold text-bg">OK</button>
+          <button className="tap rounded-xl bg-ink px-3 py-2 text-xs font-semibold text-bg">OK</button>
         </form>
       )}
 
@@ -375,7 +376,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       {type === "transfer" ? (
         <div className="mt-4">
           <div className="label flex items-center gap-1">
-            <ArrowRight size={12} /> Hacia · <span className="normal-case tracking-normal text-brand-strong">{TRANSFER_KIND_LABEL[transferKind]}</span>
+            <ArrowRight size={12} /> Hacia · <span className="normal-case tracking-normal text-brand">{TRANSFER_KIND_LABEL[transferKind]}</span>
           </div>
           <AccountChips value={toAccountId} onChange={setToAccountId} balances={balances} fmt={fmt} exclude={accountId} includeAll />
           {crossCurrency && toAcc && (
@@ -395,8 +396,8 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
           <div className="label flex items-center justify-between">
             <span>{editing ? "Categoría" : amount ? "Toca para guardar" : "Categoría"}</span>
             {suggestion && suggestion.categoryId !== categoryId && (
-              <button className="normal-case tracking-normal text-brand-strong" onClick={() => onCategoryTap(suggestion.categoryId)}>
-                ✨ {store.categories.find((c) => c.id === suggestion.categoryId)?.name}
+              <button className="normal-case tracking-normal text-brand" onClick={() => onCategoryTap(suggestion.categoryId)}>
+                Sugerida: {store.categories.find((c) => c.id === suggestion.categoryId)?.name}
               </button>
             )}
           </div>
@@ -405,15 +406,15 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
               <button
                 key={c.id}
                 onClick={() => onCategoryTap(c.id)}
-                className={`tap flex flex-col items-center gap-1 rounded-[18px] px-1 py-2 text-[11px] font-semibold leading-tight transition ${categoryId === c.id ? "bg-ink text-bg" : "bg-surface-2/80 text-ink"}`}
+                className={`tap flex flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10.5px] font-semibold leading-tight transition ${categoryId === c.id ? "bg-brand-soft text-brand ring-1 ring-brand" : "bg-surface-2/80 text-ink"}`}
               >
-                <IconBubble icon={c.icon} color={c.color} size={32} />
+                <IconBubble icon={c.icon} color={c.color} size={28} />
                 <span className="line-clamp-1 w-full text-center">{c.name}</span>
               </button>
             ))}
             {cats.length > 7 && (
-              <button onClick={() => setShowAllCats((v) => !v)} className="tap flex flex-col items-center justify-center gap-1 rounded-[18px] bg-surface-2/80 py-2 text-[11px] font-semibold text-muted">
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface text-lg">{showAllCats ? "−" : "⋯"}</span>
+              <button onClick={() => setShowAllCats((v) => !v)} className="tap flex flex-col items-center justify-center gap-0.5 rounded-xl bg-surface-2/80 py-1.5 text-[10.5px] font-medium text-muted">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface text-base">{showAllCats ? "−" : "⋯"}</span>
                 {showAllCats ? "Menos" : "Más"}
               </button>
             )}
@@ -476,7 +477,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
               }
             }}
             aria-label={k === "del" ? "Borrar" : k}
-            className="num flex h-[44px] items-center justify-center rounded-2xl text-[22px] font-semibold transition active:scale-95 active:bg-surface-2"
+            className="num flex h-10 items-center justify-center rounded-2xl text-[22px] font-semibold transition active:scale-95 active:bg-surface-2"
           >
             {k === "del" ? <Delete size={22} className="text-muted" /> : k}
           </button>
@@ -509,7 +510,7 @@ function AccountChips({
     <div className="-mx-5 flex gap-2 overflow-x-auto px-5 no-scrollbar">
       {accounts.map((a) => (
         <button key={a.id} onClick={() => onChange(a.id)} className={`chip py-2 pl-2 ${value === a.id ? "chip-on" : ""}`}>
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-sm">{a.icon}</span>
+          <AppIcon icon={a.icon} size={15} className="shrink-0 text-muted" />
           <span>{a.name}</span>
           <span className={`num text-xs ${value === a.id ? "opacity-70" : "text-muted"}`}>{fmt(balances.get(a.id) ?? 0, { compact: true, currency: a.currency })}</span>
         </button>

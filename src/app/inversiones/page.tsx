@@ -35,15 +35,15 @@ export default function Inversiones() {
       />
 
       <section className="hero p-5">
-        <div className="text-[11px] font-semibold tracking-wide text-emerald-200">VALOR DE TUS INVERSIONES</div>
-        <Money value={pos.investments} hidden={hide} className="mt-2 block text-[34px] font-extrabold leading-none" />
+        <div className="text-[13px] text-white/75">Valor de tus inversiones</div>
+        <Money value={pos.investments} hidden={hide} className="mt-2 block text-[34px] font-semibold leading-none" />
         <p className="mt-3 text-xs leading-relaxed text-white/60">Suma a tu patrimonio, pero no a tu disponible: es dinero que no puedes gastar hoy.</p>
       </section>
 
       {!list.length && (
         <div className="mt-4">
           <Empty
-            icon="🏡"
+            icon="i:property"
             title="Registra tus inversiones"
             body="Cuotas de un terreno, un diplomado, fondos mutuos o tu negocio. Cada pago que hagas se suma como aporte."
             action={<button className="btn-primary" onClick={() => setEditing({})}>Agregar inversión</button>}
@@ -61,7 +61,7 @@ export default function Inversiones() {
               <button className="flex w-full items-start gap-3 text-left" onClick={() => setEditing(a)}>
                 <IconBubble icon={a.icon} color={a.color} size={46} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-bold">{a.name}</div>
+                  <div className="truncate font-semibold">{a.name}</div>
                   <div className="truncate text-xs text-muted">
                     {INVESTMENT_KIND_LABEL[a.investmentKind ?? "other"].label}
                     {a.note ? ` · ${a.note}` : ""}
@@ -69,7 +69,7 @@ export default function Inversiones() {
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="text-[11px] font-medium text-muted">Aportado</div>
-                  <Money value={paid} hidden={hide} currency={a.currency} className="font-bold" />
+                  <Money value={paid} hidden={hide} currency={a.currency} className="font-semibold" />
                 </div>
               </button>
               {pct !== null && (

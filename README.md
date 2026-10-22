@@ -50,6 +50,6 @@ En el celular: abre la URL → menú del navegador → **Agregar a pantalla de i
 6. [App Android, widget y dónde se guardan los datos](docs/06-android-widget-datos.md)
 
 ## Capturas
-| Bienvenida | Inicio | Registro rápido | Modo oscuro |
+| Bienvenida | Inicio | Registro rápido | Mi mes |
 |---|---|---|---|
-| ![](docs/screenshots/01-welcome.png) | ![](docs/screenshots/03-home-light.png) | ![](docs/screenshots/05-quickadd-light.png) | ![](docs/screenshots/03-home-dark.png) |
+| ![](docs/screenshots/01-welcome.png) | ![](docs/screenshots/03-home-light.png) | ![](docs/screenshots/05-quickadd-light.png) | ![](docs/screenshots/06-mi-mes.png) |

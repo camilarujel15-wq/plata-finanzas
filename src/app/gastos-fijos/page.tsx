@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useStore } from "@/lib/store/store";
@@ -42,11 +43,11 @@ export default function GastosFijos() {
         <div className="card grid grid-cols-2 gap-3 p-4">
           <div>
             <div className="text-xs text-muted">Salen cada mes</div>
-            <Money value={totalOut} hidden={hide} className="text-lg font-bold text-neg" />
+            <Money value={totalOut} hidden={hide} className="text-lg font-semibold text-neg" />
           </div>
           <div>
             <div className="text-xs text-muted">Entran cada mes</div>
-            <Money value={totalIn} hidden={hide} className="text-lg font-bold text-pos" />
+            <Money value={totalIn} hidden={hide} className="text-lg font-semibold text-pos" />
           </div>
           {totalIn > 0 && (
             <div className="col-span-2 text-xs text-muted">
@@ -62,16 +63,16 @@ export default function GastosFijos() {
 
       {!items.length && (
         <div className="mt-3">
-          <Empty icon="🗓️" title="Sin gastos fijos" body="Alquiler, luz, agua, internet, celular, suscripciones, cuota del terreno y también tu sueldo." action={<button className="btn-primary" onClick={() => setEditing({ type: "expense", dayOfMonth: 5 })}>Agregar el primero</button>} />
+          <Empty icon="i:calendar" title="Sin gastos fijos" body="Alquiler, luz, agua, internet, celular, suscripciones, cuota del terreno y también tu sueldo." action={<button className="btn-primary" onClick={() => setEditing({ type: "expense", dayOfMonth: 5 })}>Agregar el primero</button>} />
         </div>
       )}
 
       <div className="mt-3 card divide-y divide-line/60">
         {items.map((r) => (
           <button key={r.id} onClick={() => setEditing(r)} className={`flex w-full items-center gap-3 px-4 py-3 text-left ${r.active ? "" : "opacity-50"}`}>
-            <span className="flex h-[42px] w-[42px] shrink-0 flex-col items-center justify-center rounded-[14px] bg-surface-2 leading-none">
-              <span className="text-[15px]">{r.icon}</span>
-              <span className="mt-0.5 text-[9px] font-bold text-muted">día {r.dayOfMonth}</span>
+            <span className="flex h-[42px] w-[42px] shrink-0 flex-col items-center justify-center rounded-full bg-surface-2 leading-none">
+              <AppIcon icon={r.icon} size={17} className="text-ink/80" />
+              <span className="mt-0.5 text-[9px] font-semibold text-muted">día {r.dayOfMonth}</span>
             </span>
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold">{r.name}</div>
@@ -80,7 +81,7 @@ export default function GastosFijos() {
                 {!r.active && " · pausado"}
               </div>
             </div>
-            <Money value={r.type === "income" ? r.amount : -r.amount} sign={r.type === "income"} hidden={hide} currency={cur(r.accountId)} className={`font-bold ${r.type === "income" ? "text-pos" : ""}`} />
+            <Money value={r.type === "income" ? r.amount : -r.amount} sign={r.type === "income"} hidden={hide} currency={cur(r.accountId)} className={`font-semibold ${r.type === "income" ? "text-pos" : ""}`} />
           </button>
         ))}
       </div>
@@ -95,7 +96,7 @@ function RecurringForm({ initial, onClose }: { initial: Partial<RecurringItem>; 
   const spendable = useSpendableAccounts();
   const all = useAccounts();
   const [r, setR] = useState<Partial<RecurringItem>>({
-    icon: initial.type === "income" ? "💼" : "🧾",
+    icon: initial.type === "income" ? "i:briefcase" : "i:receipt",
     active: true,
     accountId: s.settings.defaultAccountId ?? spendable[0]?.id,
     ...initial,
@@ -126,7 +127,7 @@ function RecurringForm({ initial, onClose }: { initial: Partial<RecurringItem>; 
       <div className="grid gap-4">
         <Segmented
           value={r.type ?? "expense"}
-          onChange={(type) => setR({ ...r, type, categoryId: null, toAccountId: null, icon: type === "income" ? "💼" : type === "transfer" ? "🏡" : "🧾" })}
+          onChange={(type) => setR({ ...r, type, categoryId: null, toAccountId: null, icon: type === "income" ? "i:briefcase" : type === "transfer" ? "i:property" : "i:receipt" })}
           options={[
             { value: "expense", label: "Gasto" },
             { value: "income", label: "Ingreso" },
@@ -167,7 +168,7 @@ function RecurringForm({ initial, onClose }: { initial: Partial<RecurringItem>; 
           <div className="flex flex-wrap gap-2">
             {spendable.map((a) => (
               <button key={a.id} className={`chip ${r.accountId === a.id ? "chip-on" : ""}`} onClick={() => setR({ ...r, accountId: a.id })}>
-                {a.icon} {a.name}
+                <AppIcon icon={a.icon} size={15} className="shrink-0" /> {a.name}
               </button>
             ))}
           </div>
@@ -179,7 +180,7 @@ function RecurringForm({ initial, onClose }: { initial: Partial<RecurringItem>; 
               <div className="flex flex-wrap gap-2">
                 {investments.map((a) => (
                   <button key={a.id} className={`chip ${r.toAccountId === a.id ? "chip-on" : ""}`} onClick={() => setR({ ...r, toAccountId: a.id, name: r.name || `Cuota ${a.name}`, icon: a.icon })}>
-                    {a.icon} {a.name}
+                    <AppIcon icon={a.icon} size={15} className="shrink-0" /> {a.name}
                   </button>
                 ))}
               </div>
@@ -193,7 +194,7 @@ function RecurringForm({ initial, onClose }: { initial: Partial<RecurringItem>; 
             <div className="flex flex-wrap gap-2">
               {cats.map((c) => (
                 <button key={c.id} className={`chip ${r.categoryId === c.id ? "chip-on" : ""}`} onClick={() => setR({ ...r, categoryId: c.id, icon: initial.id ? r.icon : c.icon })}>
-                  {c.icon} {c.name}
+                  <AppIcon icon={c.icon} size={15} className="shrink-0" /> {c.name}
                 </button>
               ))}
             </div>
@@ -201,7 +202,7 @@ function RecurringForm({ initial, onClose }: { initial: Partial<RecurringItem>; 
         )}
         <div>
           <div className="label">Ícono</div>
-          <EmojiPicker value={r.icon!} options={[...new Set(["🧾", "💡", "💧", "📶", "📱", "🏠", "🏡", "🎬", "🎵", "🚗", "🏋️", "🎓", "🐾", "💼", "🛡️", "💳", ...EMOJIS.slice(0, 8)])]} onChange={(icon) => setR({ ...r, icon })} />
+          <EmojiPicker value={r.icon!} onChange={(icon) => setR({ ...r, icon })} />
         </div>
         {initial.id && (
           <Segmented

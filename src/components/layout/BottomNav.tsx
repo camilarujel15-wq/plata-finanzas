@@ -15,7 +15,7 @@ const items = [
   { href: "/mas/", label: "Más", icon: LayoutGrid },
 ];
 
-/** Barra flotante con el botón de registro al centro (toque: gasto · mantener: dictar). */
+/** Barra inferior fija con el botón de registro al centro (toque: gasto · mantener: dictar). */
 export function BottomNav() {
   const path = usePathname();
   const open = useUI((s) => s.openQuickAdd);
@@ -24,19 +24,17 @@ export function BottomNav() {
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href.replace(/\/$/, "")));
 
   return (
-    <nav className="pb-safe pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4">
-      <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-5 items-center rounded-[26px] bg-surface/90 px-1.5 py-1.5 shadow-float ring-1 ring-line/60 backdrop-blur-xl">
+    <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface">
+      <div className="mx-auto grid max-w-lg grid-cols-5 items-center px-2 pt-1.5">
         {items.map((it) =>
           it ? (
             <Link
               key={it.href}
               href={it.href}
               onClick={() => haptic()}
-              className={`tap flex flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[10.5px] font-semibold transition ${active(it.href) ? "text-ink" : "text-muted"}`}
+              className={`tap flex flex-col items-center gap-1 py-1 text-[11px] font-medium ${active(it.href) ? "text-brand" : "text-muted"}`}
             >
-              <span className={`flex h-8 w-12 items-center justify-center rounded-full transition ${active(it.href) ? "bg-brand/15 text-brand-strong" : ""}`}>
-                <it.icon size={21} strokeWidth={active(it.href) ? 2.4 : 1.9} />
-              </span>
+              <it.icon size={22} strokeWidth={active(it.href) ? 2.2 : 1.7} />
               {it.label}
             </Link>
           ) : (
@@ -59,9 +57,9 @@ export function BottomNav() {
                   open();
                 }}
                 onContextMenu={(e) => e.preventDefault()}
-                className="tap -mt-7 flex h-[60px] w-[60px] items-center justify-center rounded-[22px] bg-gradient-to-br from-emerald-300 via-emerald-400 to-emerald-600 text-brand-ink shadow-glow ring-4 ring-bg"
+                className="-mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-float ring-4 ring-bg transition active:scale-95"
               >
-                <Plus size={30} strokeWidth={2.6} />
+                <Plus size={26} strokeWidth={2.2} />
               </button>
             </div>
           ),

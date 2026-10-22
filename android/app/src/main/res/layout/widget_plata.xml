@@ -25,7 +25,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Disponible real"
-                android:textColor="#6EE7B7"
+                android:textColor="#CCFFFFFF"
                 android:textSize="12sp"
                 android:fontFamily="sans-serif-medium" />
 
@@ -48,7 +48,7 @@
             android:contentDescription="Registrar movimiento"
             android:gravity="center"
             android:text="+"
-            android:textColor="#04140D"
+            android:textColor="#0E5A48"
             android:textSize="26sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -81,7 +81,6 @@
         </LinearLayout>
 
         <LinearLayout android:id="@+id/tile_voice" style="@style/WidgetTile">
-            <TextView style="@style/WidgetTileEmoji" android:text="🎙️" />
             <TextView style="@style/WidgetTileLabel" android:text="Dictar" />
         </LinearLayout>
     </LinearLayout>
