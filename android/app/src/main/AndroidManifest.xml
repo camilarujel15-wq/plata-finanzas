@@ -42,7 +42,7 @@
             android:taskAffinity=""
             android:launchMode="singleTask"
             android:exported="false"
-            android:windowSoftInputMode="stateAlwaysHidden" />
+            android:windowSoftInputMode="stateHidden|adjustResize" />
 
         <receiver
             android:name=".PlataWidgetProvider"

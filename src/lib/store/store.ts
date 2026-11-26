@@ -161,8 +161,8 @@ export const useStore = create<State & Actions>()(
             kind: "budget",
             title:
               threshold >= 100
-                ? `${cat?.icon ?? ""} Superaste el presupuesto de ${cat?.name}`
-                : `${cat?.icon ?? ""} ${cat?.name}: ${pct}% del presupuesto`,
+                ? `Superaste el presupuesto de ${cat?.name}`
+                : `${cat?.name}: ${pct}% del presupuesto`,
             body:
               threshold >= 100
                 ? "Considera mover dinero de otra categoría o ajustar el límite."

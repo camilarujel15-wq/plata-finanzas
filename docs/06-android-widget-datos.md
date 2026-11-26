@@ -103,3 +103,8 @@ Cada persona instala el mismo `Plata.apk` y crea **su propia cuenta** de respald
 - **Siempre claro:** sin modo oscuro, ni en la app ni en el widget ni en la barra de estado de Android (`forceDarkAllowed=false`, temas `Light`).
 - **Íconos de línea** (lucide) en lugar de emojis. Los datos existentes (emojis) se traducen al mostrarse (`AppIcon`) y los íconos nuevos se guardan como `i:clave`. Los colores vivos de versiones anteriores se atenúan al mostrarse con `color-mix`.
 - Inicio: saldo disponible en una tarjeta de color liso, cuatro accesos rápidos (Gasto, Ingreso, Transferir, Dictar), fin de mes, resumen y listas en tarjetas con divisores.
+
+## 6.12 Registro más cómodo (v1.5)
+- **Monto:** el teclado numérico se abre al tocar el monto (y al empezar un registro nuevo). Se oculta al elegir una cuenta o una categoría, al tocar *Listo* o al escribir una nota.
+- **Cuentas en cuadrícula**, como las categorías y ordenadas de más a menos usadas (90 días): hasta 4 cuentas en una fila, de 5 a 8 en dos filas, y con más de 8 se muestran las 7 más usadas más *+N*. La cuenta elegida siempre queda visible.
+- **Widget:** la pantalla rápida tiene un campo de nota opcional, con el teclado del sistema y la hoja que sube para no taparlo. Cuentas y categorías también van en cuadrícula. La nota llega a la app como comercio/nota del movimiento.

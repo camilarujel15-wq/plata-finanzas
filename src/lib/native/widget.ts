@@ -17,6 +17,7 @@ interface PendingItem {
   categoryId: string;
   date: string;
   createdAt: string;
+  note?: string;
 }
 
 interface PlataWidgetPlugin {
@@ -42,7 +43,13 @@ function byFrequency(s: State, kind: "expense" | "income") {
 
 /** Lo que el widget muestra. Se recalcula cada vez que cambian los datos. */
 function buildSnapshot(s: State) {
-  const accounts = s.accounts.filter((a) => !a.deletedAt && !a.archived && isSpendable(a.type)).sort((a, b) => a.sortOrder - b.sortOrder);
+  // Cuentas de más a menos usadas (90 días), igual que en el registro de la app.
+  const since = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10);
+  const accFreq = new Map<string, number>();
+  for (const t of s.transactions) if (!t.deletedAt && t.date >= since) accFreq.set(t.accountId, (accFreq.get(t.accountId) ?? 0) + 1);
+  const accounts = s.accounts
+    .filter((a) => !a.deletedAt && !a.archived && isSpendable(a.type))
+    .sort((a, b) => (accFreq.get(b.id) ?? 0) - (accFreq.get(a.id) ?? 0) || a.sortOrder - b.sortOrder);
   const fx = { base: s.settings.currency, usdRate: s.settings.usdRate ?? DEFAULT_USD_RATE };
   const pos = position(s.accounts, accountBalances(s.accounts, s.transactions), s.goals, s.contributions, fx);
   const expense = byFrequency(s, "expense");
@@ -80,6 +87,7 @@ export async function drainWidgetQueue(): Promise<number> {
       accountId: it.accountId,
       categoryId: it.categoryId,
       date: it.date,
+      merchant: it.note?.trim() || undefined,
       source: "widget",
     });
     n++;

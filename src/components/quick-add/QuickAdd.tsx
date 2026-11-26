@@ -73,6 +73,12 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
   const [showAllCats, setShowAllCats] = useState(false);
   const [textMode, setTextMode] = useState(Boolean(qa.text));
   const [shake, setShake] = useState(false);
+  // Teclado del monto: abierto al empezar un registro nuevo; se oculta al elegir cuenta o categoría.
+  const [padOpen, setPadOpen] = useState(!editing && !qa.amount && !qa.text && !qa.autoVoice);
+  const choose = useCallback(<T,>(fn: (v: T) => void) => (v: T) => {
+    setPadOpen(false);
+    fn(v);
+  }, []);
   const textRef = useRef<HTMLInputElement>(null);
 
   const cats = useCategoriesByFrequency(type === "income" ? "income" : "expense");
@@ -135,6 +141,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       if (!amt || amt <= 0) {
         setShake(true);
         setTimeout(() => setShake(false), 400);
+        setPadOpen(true);
         return;
       }
       if (!acc) {
@@ -185,7 +192,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
         const label =
           t === "transfer"
             ? TRANSFER_KIND_LABEL[kind!]
-            : `${catObj?.icon ?? ""} ${catObj?.name ?? ""}`;
+            : catObj?.name ?? "";
         toast({
           title: `${t === "income" ? "Ingreso" : t === "transfer" ? "Transferencia" : "Gasto"} ${fmt(amt, { currency: src?.currency })}`,
           body: `${label} · ${dayLabel(payload.date)}`,
@@ -250,6 +257,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
     else if (!amount) {
       setShake(true);
       setTimeout(() => setShake(false), 400);
+      setPadOpen(true);
     }
   };
 
@@ -321,10 +329,17 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
             dayLabel(date)
           )}
         </div>
-        <div className={`num mt-1 flex items-start text-[42px] font-semibold leading-none tracking-tight ${type === "income" ? "text-pos" : ""} ${shake ? "text-neg" : ""}`}>
+        <button
+          type="button"
+          aria-label="Monto"
+          onClick={() => setPadOpen(true)}
+          className={`num mt-1 flex items-start border-b-2 px-3 pb-1 text-[42px] font-semibold leading-none tracking-tight transition-colors ${padOpen ? "border-brand" : "border-transparent"} ${type === "income" ? "text-pos" : ""} ${shake ? "text-neg" : ""}`}
+        >
           <span className="mr-1.5 mt-1.5 text-2xl font-semibold text-muted">{symbol(currency)}</span>
           {digits || "0"}
-        </div>
+          {padOpen && <span className="ml-0.5 mt-1 h-9 w-0.5 animate-pulse bg-brand" aria-hidden />}
+        </button>
+        {!padOpen && !digits && <div className="mt-1 text-[11px] text-muted">Toca el monto para escribirlo</div>}
         {note && type !== "transfer" && <div className="mt-2 max-w-full truncate rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">{note}</div>}
       </div>
 
@@ -355,7 +370,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
       {/* Cuentas */}
       <div className="mt-3">
         <div className="label">{type === "transfer" ? "Desde" : type === "income" ? "A la cuenta" : "Pagado con"}</div>
-        <AccountChips value={accountId} onChange={setAccountId} balances={balances} fmt={fmt} includeAll={type === "transfer"} />
+        <AccountGrid value={accountId} onChange={choose(setAccountId)} balances={balances} fmt={fmt} includeAll={type === "transfer"} role="from" />
       </div>
 
       {type === "expense" && fromAcc?.type === "credit_card" && (
@@ -378,7 +393,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
           <div className="label flex items-center gap-1">
             <ArrowRight size={12} /> Hacia · <span className="normal-case tracking-normal text-brand">{TRANSFER_KIND_LABEL[transferKind]}</span>
           </div>
-          <AccountChips value={toAccountId} onChange={setToAccountId} balances={balances} fmt={fmt} exclude={accountId} includeAll />
+          <AccountGrid value={toAccountId} onChange={choose(setToAccountId)} balances={balances} fmt={fmt} exclude={accountId} includeAll role="to" />
           {crossCurrency && toAcc && (
             <div className="mt-3 animate-rise rounded-2xl bg-surface-2 p-3">
               <div className="label mb-1.5">Llega a {toAcc.name} ({symbol(toAcc.currency)})</div>
@@ -405,7 +420,10 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
             {visibleCats.map((c) => (
               <button
                 key={c.id}
-                onClick={() => onCategoryTap(c.id)}
+                onClick={() => {
+                  setPadOpen(false);
+                  onCategoryTap(c.id);
+                }}
                 className={`tap flex flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[10.5px] font-semibold leading-tight transition ${categoryId === c.id ? "bg-brand-soft text-brand ring-1 ring-brand" : "bg-surface-2/80 text-ink"}`}
               >
                 <IconBubble icon={c.icon} color={c.color} size={28} />
@@ -413,7 +431,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
               </button>
             ))}
             {cats.length > 7 && (
-              <button onClick={() => setShowAllCats((v) => !v)} className="tap flex flex-col items-center justify-center gap-0.5 rounded-xl bg-surface-2/80 py-1.5 text-[10.5px] font-medium text-muted">
+              <button onClick={() => { setPadOpen(false); setShowAllCats((v) => !v); }} className="tap flex flex-col items-center justify-center gap-0.5 rounded-xl bg-surface-2/80 py-1.5 text-[10.5px] font-medium text-muted">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface text-base">{showAllCats ? "−" : "⋯"}</span>
                 {showAllCats ? "Menos" : "Más"}
               </button>
@@ -434,7 +452,7 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
           {date !== today() && date !== addDays(today(), -1) ? dayLabel(date) : "Otra fecha"}
           <input type="date" value={date} max={addDays(today(), 365)} onChange={(e) => e.target.value && setDate(e.target.value)} className="absolute inset-0 opacity-0" aria-label="Fecha" />
         </label>
-        <button className={`chip ${details ? "chip-on" : ""}`} onClick={() => setDetails((v) => !v)}>
+        <button className={`chip ${details ? "chip-on" : ""}`} onClick={() => { setPadOpen(false); setDetails((v) => !v); }}>
           <StickyNote size={14} /> Nota
         </button>
         <button className={`chip ${textMode ? "chip-on" : ""}`} onClick={() => setTextMode((v) => !v)}>
@@ -455,45 +473,58 @@ function QuickAddInner({ onClose }: { onClose: () => void }) {
                     : "Nota o comercio (ej. Tambo, Uber)"
             }
             value={note}
+            onFocus={() => setPadOpen(false)}
             onChange={(e) => setNote(e.target.value)}
           />
-          <input className="input" placeholder="Etiquetas: viaje, trabajo" value={tags} onChange={(e) => setTags(e.target.value)} />
+          <input className="input" placeholder="Etiquetas: viaje, trabajo" value={tags} onFocus={() => setPadOpen(false)} onChange={(e) => setTags(e.target.value)} />
         </div>
       )}
 
-      {/* Teclado numérico propio */}
-      <div className="mt-2 grid grid-cols-3 gap-1" aria-label="Teclado numérico">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"].map((k) => (
-          <button
-            key={k}
-            onClick={() => {
-              haptic();
-              press(k);
-            }}
-            onContextMenu={(e) => {
-              if (k === "del") {
-                e.preventDefault();
-                setDigits("");
-              }
-            }}
-            aria-label={k === "del" ? "Borrar" : k}
-            className="num flex h-10 items-center justify-center rounded-2xl text-[22px] font-semibold transition active:scale-95 active:bg-surface-2"
-          >
-            {k === "del" ? <Delete size={22} className="text-muted" /> : k}
+      {/* Teclado numérico: aparece al tocar el monto */}
+      {padOpen && (
+        <div className="sticky bottom-0 z-10 -mx-5 mt-3 animate-rise border-t border-line bg-surface px-5 pb-1 pt-2" aria-label="Teclado numérico">
+          <div className="grid grid-cols-3 gap-1">
+            {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"].map((k) => (
+              <button
+                key={k}
+                onClick={() => {
+                  haptic();
+                  press(k);
+                }}
+                onContextMenu={(e) => {
+                  if (k === "del") {
+                    e.preventDefault();
+                    setDigits("");
+                  }
+                }}
+                aria-label={k === "del" ? "Borrar" : k}
+                className="num flex h-11 items-center justify-center rounded-xl text-[22px] font-medium transition active:bg-surface-2"
+              >
+                {k === "del" ? <Delete size={22} className="text-muted" /> : k}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setPadOpen(false)} className="btn-ghost mt-1 w-full py-2.5 text-sm">
+            Listo
           </button>
-        ))}
-      </div>
+        </div>
+      )}
     </Sheet>
   );
 }
 
-function AccountChips({
+/**
+ * Cuentas en cuadrícula, como las categorías, ordenadas de más a menos usadas (90 días).
+ * Hasta 4 cuentas: una fila; 5 a 8: dos filas; más de 8: las 7 más usadas + "Más".
+ */
+function AccountGrid({
   value,
   onChange,
   balances,
   fmt,
   exclude,
   includeAll,
+  role,
 }: {
   value: string | null;
   onChange: (id: string) => void;
@@ -501,20 +532,60 @@ function AccountChips({
   fmt: (v: number, o?: { compact?: boolean; currency?: string }) => string;
   exclude?: string | null;
   includeAll?: boolean;
+  role: "from" | "to";
 }) {
   const all = useAccounts();
   const spendable = useSpendableAccounts();
-  const accounts = (includeAll ? all : spendable).filter((a) => a.id !== exclude);
+  const txs = useStore((s) => s.transactions);
+  const [showAll, setShowAll] = useState(false);
+  const accounts = useMemo(() => {
+    const since = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10);
+    const freq = new Map<string, number>();
+    for (const t of txs) {
+      if (t.deletedAt || t.date < since) continue;
+      const id = role === "to" ? t.toAccountId : t.accountId;
+      if (id) freq.set(id, (freq.get(id) ?? 0) + 1);
+    }
+    return (includeAll ? all : spendable)
+      .filter((a) => a.id !== exclude)
+      .sort((a, b) => (freq.get(b.id) ?? 0) - (freq.get(a.id) ?? 0) || a.sortOrder - b.sortOrder);
+  }, [all, spendable, includeAll, exclude, txs, role]);
+
   if (!accounts.length) return <p className="text-sm text-muted">Crea una cuenta en Más → Cuentas.</p>;
+  const overflow = accounts.length > 8;
+  let visible = overflow && !showAll ? accounts.slice(0, 7) : accounts;
+  // La cuenta elegida siempre visible, aunque esté entre las menos usadas.
+  if (value && !visible.some((a) => a.id === value)) {
+    const sel = accounts.find((a) => a.id === value);
+    if (sel) visible = [...visible.slice(0, visible.length - 1), sel];
+  }
+  const cols = accounts.length <= 4 ? accounts.length : 4;
+  const colClass = ["grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4"][Math.max(1, cols) - 1];
+
   return (
-    <div className="-mx-5 flex gap-2 overflow-x-auto px-5 no-scrollbar">
-      {accounts.map((a) => (
-        <button key={a.id} onClick={() => onChange(a.id)} className={`chip py-2 pl-2 ${value === a.id ? "chip-on" : ""}`}>
-          <AppIcon icon={a.icon} size={15} className="shrink-0 text-muted" />
-          <span>{a.name}</span>
-          <span className={`num text-xs ${value === a.id ? "opacity-70" : "text-muted"}`}>{fmt(balances.get(a.id) ?? 0, { compact: true, currency: a.currency })}</span>
+    <div className={`grid ${colClass} gap-2`}>
+      {visible.map((a) => {
+        const on = value === a.id;
+        return (
+          <button
+            key={a.id}
+            onClick={() => onChange(a.id)}
+            className={`tap flex min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10.5px] font-semibold leading-tight ${on ? "bg-brand-soft text-brand ring-1 ring-brand" : "bg-surface-2/80 text-ink"}`}
+          >
+            <IconBubble icon={a.icon} color={a.color} size={26} />
+            <span className="line-clamp-1 w-full text-center">{a.name}</span>
+            <span className={`num w-full truncate text-center text-[10px] font-normal ${on ? "text-brand/80" : "text-muted"}`}>
+              {fmt(balances.get(a.id) ?? 0, { compact: true, currency: a.currency })}
+            </span>
+          </button>
+        );
+      })}
+      {overflow && (
+        <button onClick={() => setShowAll((v) => !v)} className="tap flex flex-col items-center justify-center gap-0.5 rounded-xl bg-surface-2/80 py-1.5 text-[10.5px] font-medium text-muted">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-base">{showAll ? "−" : "⋯"}</span>
+          {showAll ? "Menos" : `+${accounts.length - 7}`}
         </button>
-      ))}
+      )}
     </div>
   );
 }

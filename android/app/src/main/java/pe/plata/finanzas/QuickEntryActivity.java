@@ -16,9 +16,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.text.InputType;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,7 +31,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -51,11 +56,12 @@ public class QuickEntryActivity extends Activity {
     private TextView amountView;
     private TextView titleView;
     private TextView emojiView;
-    private LinearLayout categoryRow;
-    private LinearLayout accountRow;
+    private GridLayout categoryRow;
+    private GridLayout accountRow;
     private TextView typeExpense;
     private TextView typeIncome;
     private TextView saveButton;
+    private EditText noteInput;
 
     // Paleta (claro / oscuro)
     private int cBg, cSurface2, cInk, cMuted, cLine, cBrand, cBrandInk, cNeg, cPos;
@@ -66,7 +72,8 @@ public class QuickEntryActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         Window w = getWindow();
         w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        // El teclado del sistema solo aparece al tocar la nota; la hoja sube para no quedar tapada.
+        w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         // Siempre claro, con el mismo sistema visual de la app.
         cBg = 0xFFFFFFFF;
@@ -172,6 +179,30 @@ public class QuickEntryActivity extends Activity {
         sheet.addView(label("CATEGORÍA"));
         categoryRow = chipRow(sheet);
 
+        // Nota opcional (comercio o detalle)
+        noteInput = new EditText(this);
+        noteInput.setHint("Nota (opcional): comercio o detalle");
+        noteInput.setHintTextColor(cMuted);
+        noteInput.setTextColor(cInk);
+        noteInput.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        noteInput.setSingleLine(true);
+        noteInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        noteInput.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        noteInput.setPadding(dp(14), dp(12), dp(14), dp(12));
+        GradientDrawable noteBg = round(cBg, dp(12));
+        noteBg.setStroke(dp(1), cLine);
+        noteInput.setBackground(noteBg);
+        noteInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                hideKeyboard();
+                return true;
+            }
+            return false;
+        });
+        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        nlp.bottomMargin = dp(4);
+        sheet.addView(noteInput, nlp);
+
         // Teclado
         GridLayout keypad = new GridLayout(this);
         keypad.setColumnCount(3);
@@ -181,6 +212,7 @@ public class QuickEntryActivity extends Activity {
             key.setGravity(Gravity.CENTER);
             key.setBackground(round(cBg, dp(28)));
             key.setOnClickListener(v -> {
+                hideKeyboard();
                 v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                 press(k);
             });
@@ -236,23 +268,42 @@ public class QuickEntryActivity extends Activity {
 
     private interface OnPick { void pick(String id); }
 
-    private void fillChips(LinearLayout row, JSONArray items, String selected, OnPick onPick) {
-        row.removeAllViews();
+    /** Opciones en cuadrícula (como en la app): hasta 4 por fila y máximo 8, la elegida siempre visible. */
+    private void fillChips(GridLayout grid, JSONArray items, String selected, OnPick onPick) {
+        grid.removeAllViews();
         if (items == null) return;
+        List<JSONObject> list = new ArrayList<>();
         for (int i = 0; i < items.length(); i++) {
             JSONObject it = items.optJSONObject(i);
-            if (it == null) continue;
+            if (it != null) list.add(it);
+        }
+        int max = 8;
+        List<JSONObject> shown = new ArrayList<>(list.subList(0, Math.min(max, list.size())));
+        if (selected != null && list.size() > max) {
+            boolean present = false;
+            for (JSONObject o : shown) if (selected.equals(o.optString("id"))) present = true;
+            if (!present) for (JSONObject o : list) if (selected.equals(o.optString("id"))) { shown.set(max - 1, o); break; }
+        }
+        grid.setColumnCount(Math.max(1, Math.min(4, shown.size())));
+        for (JSONObject it : shown) {
             String id = it.optString("id");
             boolean on = id.equals(selected);
-            TextView chip = text(it.optString("name", ""), 14, on ? cBrand : cInk, on);
-            chip.setPadding(dp(14), dp(9), dp(14), dp(9));
-            GradientDrawable d = round(on ? 0xFFE8F1EE : cBg, dp(20));
-            d.setStroke(dp(1), on ? cBrand : cLine);
-            chip.setBackground(d);
-            chip.setOnClickListener(v -> onPick.pick(id));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.rightMargin = dp(8);
-            row.addView(chip, lp);
+            TextView tile = text(it.optString("name", ""), 13, on ? cBrand : cInk, on);
+            tile.setGravity(Gravity.CENTER);
+            tile.setMaxLines(1);
+            tile.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            tile.setPadding(dp(6), dp(11), dp(6), dp(11));
+            GradientDrawable d = round(on ? 0xFFE8F1EE : cSurface2, dp(12));
+            if (on) d.setStroke(dp(1), cBrand);
+            tile.setBackground(d);
+            tile.setOnClickListener(v -> {
+                hideKeyboard();
+                onPick.pick(id);
+            });
+            GridLayout.LayoutParams lp = new GridLayout.LayoutParams(GridLayout.spec(GridLayout.UNDEFINED), GridLayout.spec(GridLayout.UNDEFINED, 1f));
+            lp.width = 0;
+            lp.setMargins(dp(3), dp(3), dp(3), dp(3));
+            grid.addView(tile, lp);
         }
     }
 
@@ -308,6 +359,8 @@ public class QuickEntryActivity extends Activity {
             SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
             iso.setTimeZone(TimeZone.getTimeZone("UTC"));
             item.put("createdAt", iso.format(new Date()));
+            String note = noteInput != null ? noteInput.getText().toString().trim() : "";
+            if (!note.isEmpty()) item.put("note", note);
             WidgetStore.addPending(this, item);
             if (snap != null) {
                 snap.put("lastAccountId", accountId);
@@ -341,6 +394,13 @@ public class QuickEntryActivity extends Activity {
 
     // ───────────────────────── Helpers ─────────────────────────
 
+    private void hideKeyboard() {
+        if (noteInput == null || !noteInput.hasFocus()) return;
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) imm.hideSoftInputFromWindow(noteInput.getWindowToken(), 0);
+        noteInput.clearFocus();
+    }
+
     private static JSONObject findById(JSONArray arr, String id) {
         if (arr == null || id == null) return null;
         for (int i = 0; i < arr.length(); i++) {
@@ -350,16 +410,13 @@ public class QuickEntryActivity extends Activity {
         return null;
     }
 
-    private LinearLayout chipRow(LinearLayout parent) {
-        HorizontalScrollView scroll = new HorizontalScrollView(this);
-        scroll.setHorizontalScrollBarEnabled(false);
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        scroll.addView(row);
+    private GridLayout chipRow(LinearLayout parent) {
+        GridLayout grid = new GridLayout(this);
+        grid.setColumnCount(4);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = dp(12);
-        parent.addView(scroll, lp);
-        return row;
+        lp.bottomMargin = dp(10);
+        parent.addView(grid, lp);
+        return grid;
     }
 
     private TextView label(String s) {
